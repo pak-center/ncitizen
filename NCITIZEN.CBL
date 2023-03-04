@@ -5,9 +5,11 @@
       *                      (VEDIC ASTROLOGY)
       ******************************************************************
       *    ABOUT
-      *          A
-      *          A
-      *          A
+      *          PGM SELECTS SQL QUERIES OF DATA FROM DB2 LIKE
+      *          GENDER, ALIVE STATUS AND AGE. RANGE IS BEING
+      *          COUNTED IN VARIABLES AND MOVED TO PROPER BOUNDRIES
+      *          AND GROUPS OF NAKSHATRAS, AGE
+      *          LAST BUT NOT LEAST IT DOES PERCENTAGE STATISTICS
       *
       ******************************************************************
       *          COPYRIGHT:  GNU GPLV3 LICENSE 2023
@@ -20,12 +22,16 @@
       *          WRITTEN IN LEGACY VSCODE WITHOUT GNUCOBOL EXTENSION
       *
       *    PURPOSE
-      *          TRAINING AND COGNITIVE OBJECTIVES OF 
-      *                      COBOL
-      *                      SQL TO DB2 CONNECTION
-      *                      EMBEDDED SQL
-      *                      RECORDS WRITE TO DATASET
+      *          TRAINING AND COGNITIVE OBJECTIVES OF COBOL:
+      *                      -SQL TO DB2 CONNECTION
+      *                      -EMBEDDED SQL
+      *                      -RECORDS WRITE TO DATASET
       *
+      ******************************************************************
+      *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR EVERY 120 YEARS
+      *       BY 10 YEARS
+      *    INPUT-NUMBER 1 TO 10 EXAMPLE 2 FOR 120 BY 10 + 120 BY 10
+      *    INTERVAL = CURRENT YEAR - 120 YEARS IF 1 IS SELECTED
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -33,9 +39,120 @@
        DATA DIVISION.
        FILE SECTION.
        WORKING-STORAGE SECTION.
+           EXEC SQL  
+              INCLUDE SQLCA  
+           END-EXEC.
+      *
+           EXEC SQL BEGIN DECLARE SECTION
+           END-EXEC.
+       01 WS-QREC01.
+        05 WS-QBDATE   PIC   X(10).
+        05 WS-QGENDER  PIC   9.
+        05 WS-QALIVE   PIC   9.
+       01 WS-QDATE-LIMIT  PIC   X(10).
+           EXEC SQL END DECLARE SECTION
+           END-EXEC.
+      *
+           EXEC SQL  
+              DECLARE STUDCUR CURSOR FOR  
+              SELECT BDATE, GENDER, ALIVE FROM CITIZENS  
+              WHERE BDATE <: WS-QDATE-LIMIT 
+              *> CHECK DATE STANDARD FIRST TO IMPL
+           END-EXEC.  
+
+
+       01 WS-ALL.
+         05 WS-ARGS.
+          10 WS-INTERVAL-VAL          PIC   9(4).
+          88 PASS VALUES ARE 01 THRU 10.
+         05 WS-ADATE                  PIC   9(8).
+         05 WS-USER                   PIC   X(8).
+         05 WS-DB2-DATE-FORMAT        PIC   X(10).
+
+         05 WS-WREC01. *> IT GOES TO DATASET OUTPUT 
+           10 WS-W-DATE                PIC   X(10).
+            15 WS-W-YEAR                   PIC   9(4).
+            15 WS-W-MONTH                  PIC   99.
+            15 WS-W-DAY                    PIC   99.
+           10 WS-W-GENDER              PIC   9.
+           10 WS-W-ALIVE               PIC   9.
+         05 WS-WREC01 OCCURS 1 TO 10 TIMES DEPENDING ON 
+                                         WS-INTERVAL-VAL.
+      *     10 
+           
+
        LINKAGE SECTION.
-       PROCEDURE DIVISION.
+       01 PARM-BUFFER.
+         05 PARM-LENGTH               PIC   S9(4) COMP.
+         05 PARM-DATA                 PIC   X(256).
+       PROCEDURE DIVISION USING PARM-BUFFER.
+           IF NOT PARM-LENGTH > 0 THEN
+              DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
+              'AUTO COMPLEMENT INTERVAL SET TO 1'
+              MOVE 1 TO WS-INTERVAL-VAL
+              MOVE 1 TO RETURN-CODE
+           ELSE
+           MOVE PARM-DATA(1:2) TO WS-INTERVAL-VAL
+           IF NOT PASS THEN
+              DISPLAY 
+              'WARNING: JCL PARM RANGE IS WRONG. TRY 01 TO 10 ',
+              'AUTO COMPLEMENT INTERVAL SET TO 1'
+              MOVE 1 TO WS-INTERVAL-VAL
+              MOVE 2 TO RETURN-CODE
+           ELSE
+              ACCEPT WS-ADATE   FROM DATE YYYYMMDD
+              ACCEPT WS-USER    FROM USERNAME
 
-
-       STOP RUN.
+              PERFORM PROC-QUERY
+              *> CATCH STH IF ERR ?
+              PERFORM PROC-NAKSHATRA-COMPUTE
+              PERFORM PROC-ANALYSE-DATA
+              PERFORM PROC-WRITE-TO-DATASET
+              
+              MOVE 0 TO RETURN-CODE
+           END-IF
+           END-IF
+      D    DISPLAY 'DEBUG: RC=', RETURN-CODE
+           STOP RUN.
       ******************************************************************
+       PROC-QUERY.
+           EXEC SQL
+              OPEN STUDCUR
+           END-EXEC.
+
+      * START CHECKING DB2 DATE FORMAT
+           EXEC SQL  
+              DECLARE STUDCUR CURSOR FOR  
+              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
+           END-EXEC.  
+      * MAYBE MOVE TO INCLUDE ?
+           IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
+              *> YYYY/MM/DD
+              DISPLAY 'T'
+           ELSE 
+           IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
+              *> MM/DD/YYYY
+              DISPLAY 'T'
+           ELSE
+              *> MM/DD/YYY
+              DISPLAY 'T'
+           END-IF
+           END-IF
+      * END CHECKING DB2 DATE FORMAT
+           
+
+           EXEC SQL
+              CLOSE STUDCUR
+           END-EXEC.
+           EXIT.
+       PROC-NAKSHATRA-COMPUTE.
+
+      *     EVALUATE *>MONTH DAY
+
+           EXIT.
+       PROC-ANALYSE-DATA.
+           
+           EXIT.
+       PROC-WRITE-TO-DATASET.
+
+           EXIT.
