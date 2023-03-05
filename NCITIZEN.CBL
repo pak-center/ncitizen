@@ -51,13 +51,16 @@
         05 WS-QGENDER  PIC   9.
         05 WS-QALIVE   PIC   9.
        01 WS-QDATE-LIMIT  PIC   X(10).
+       01 WS-QCURRENT-DB2-DATE  PIC   X(10).
            EXEC SQL END DECLARE SECTION
            END-EXEC.
       *
            EXEC SQL  
               DECLARE STUDCUR CURSOR FOR  
-              SELECT BDATE, GENDER, ALIVE FROM CITIZENS  
-              WHERE BDATE <: WS-QDATE-LIMIT 
+              SELECT BDATE, GENDER, ALIVE 
+              INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
+              FROM CITIZENS
+              WHERE BDATE >= DATE :WS-QDATE-LIMIT 
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
 
@@ -166,7 +169,8 @@
       * START CHECKING DB2 DATE FORMAT
            EXEC SQL  
               DECLARE STUDCUR CURSOR FOR  
-              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
+              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1
+              INTO :
            END-EXEC.  
       * FETCH QUERY
 
