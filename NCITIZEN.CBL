@@ -69,34 +69,55 @@
          05 WS-ADATE                  PIC   9(8).
          05 WS-USER                   PIC   X(8).
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
-
-         05 WS-WREC01. *> IT GOES TO DATASET OUTPUT 
+                 *> IT GOES TO DATASET OUTPUT 
+         05 WS-WREC01 OCCURS 1 TO 10 TIMES DEPENDING ON 
+                                         WS-INTERVAL-VAL.
            10 WS-W-DATE                PIC   X(10).
             15 WS-W-YEAR                   PIC   9(4).
             15 WS-W-MONTH                  PIC   99.
             15 WS-W-DAY                    PIC   99.
            10 WS-W-GENDER              PIC   9.
            10 WS-W-ALIVE               PIC   9.
-         05 WS-WREC01 OCCURS 1 TO 10 TIMES DEPENDING ON 
-                                         WS-INTERVAL-VAL.
-      *     10 
-      ************************************ 
-      * VARIABLES FOR PROC-NAKSHATRA-COMPUTE
-      * AND PROC-ANALYSE-DATA
-      *********************************************
+      
+      ******************************************************************
+      * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
+      ******************************************************************
        01-WS-STATS.
-        05 WS-PMONTHDAY      PIC   9(4).  
+        05 WS-MONTH-DAY      PIC   9(4).  
 
         05 WS-CTAB. *> OCCURS 1 TO 10 TIMES DEP ON
-         10 WS-UNKNOWN-04A   PIC  9(9) COMP-5.  *> MAX 18 FOR WORLDWIDE  
-         10 WS-ASWINI        PIC  9(9) COMP-5.
-         10 WS-UNKNOWN-04B   PIC  9(9) COMP-5.
-      *
-         10 WS-BHARANI       PIC   9(9) COMP-5.
-         10 WS-UNKNOWN-05A   PIC   9(9) COMP-5.
-         10 WS-KRITTIKA      PIC   9(9) COMP-5.
-         10 WS-UNKNOWN-05B   PIC   9(9) COMP-5.
-      
+         10 WS-NTAB OCCURS 27 TIMES.
+          15 WS-N   PIC   9(9) COMP-5.
+          14 WS-U   PIC   9(9) COMP-5.
+      *  05 WS-NTAB-NAMES
+
+      * 'ASWINI'
+      * 'BHARANI'
+      * 'KRITTIKA'
+      * 'ROHINI'
+      * 'MRIGASIRA'
+      * 'ARDRA'
+      * 'PUNARVASU' 
+      * 'PUSJA'    
+      * 'ASZLESZA'      
+      * 'MAGHA'
+      * 'PURVA PHALGUNI'
+      * 'UTTARA PHALGUNI'
+      * 'HASTA'
+      * 'CAJTRA'      
+      * 'SWATI'      
+      * 'WAJSIAKHA'      
+      * 'ANURADHA'      
+      * 'DZJESZTHA'      
+      * 'MULA'      
+      * 'PURVA ASZADHA'      
+      * 'UTTARA ASZADHA'      
+      * 'SRAWANA'      
+      * 'DHANISZTA'      
+      * 'SATABHISZAK'      
+      * 'PURVA BHADRA'      
+      * 'UTTARA BHADRA'
+      * 'REVATI'
       
       
       
@@ -174,17 +195,17 @@
       ****************************************************************** 
       *
       ******************************************************************
-           EVALUATE WS-PMONTHDAY *>MONTH DAY
+           EVALUATE WS-MONTH-DAY *>MONTH DAY
               WHEN 0413
-                 COMPUTE WS-UNKNOWN-04A = WS-UNKNOWN-04A + 1
+                 COMPUTE WS-U(I,27) = WS-U(I,) + 1
               WHEN 0414 THRU 0426
-                 COMPUTE WS-ASWINI = WS-ASWINI + 1
+                 COMPUTE WS-N(I,1) = WS-N(I,1) + 1
               WHEN 0427
-                 COMPUTE WS-UNKNOWN-04B = WS-UNKNOWN-04B + 1
+                 COMPUTE WS-U(I,1) = WS-U(I,) + 1
               WHEN 0528 THRU 0510
-                 COMPUTE WS-BHARANI = WS-BHARANI + 1
+                 COMPUTE WS-N(I,2) = WS-N(I,2) + 1
               WHEN 0511
-                 COMPUTE WS-UNKNOWN-05A = WS-UNKNOWN-05A + 1
+                 COMPUTE WS-U(I,2) = WS-U(I,) + 1
 
            END-EVALUATE
            EXIT.
