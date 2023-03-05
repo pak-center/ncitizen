@@ -26,6 +26,7 @@
       *                      -SQL TO DB2 CONNECTION
       *                      -EMBEDDED SQL
       *                      -RECORDS WRITE TO DATASET
+      *          NO INCLUDES, COPYBOOKS, CALLS JUST SINGLE FILE
       *
       ******************************************************************
       *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR EVERY 120 YEARS
@@ -79,8 +80,29 @@
          05 WS-WREC01 OCCURS 1 TO 10 TIMES DEPENDING ON 
                                          WS-INTERVAL-VAL.
       *     10 
-           
+      ************************************ 
+      * VARIABLES FOR PROC-NAKSHATRA-COMPUTE
+      * AND PROC-ANALYSE-DATA
+      *********************************************
+       01-WS-STATS.
+        05 WS-PMONTHDAY      PIC   9(4).  
 
+        05 WS-CTAB. *> OCCURS 1 TO 10 TIMES DEP ON
+         10 WS-UNKNOWN-04A   PIC  9(9) COMP-5.  *> MAX 18 FOR WORLDWIDE  
+         10 WS-ASWINI        PIC  9(9) COMP-5.
+         10 WS-UNKNOWN-04B   PIC  9(9) COMP-5.
+      *
+         10 WS-BHARANI       PIC   9(9) COMP-5.
+         10 WS-UNKNOWN-05A   PIC   9(9) COMP-5.
+         10 WS-KRITTIKA      PIC   9(9) COMP-5.
+         10 WS-UNKNOWN-05B   PIC   9(9) COMP-5.
+      
+      
+      
+      
+      
+      
+      *************************************
        LINKAGE SECTION.
        01 PARM-BUFFER.
          05 PARM-LENGTH               PIC   S9(4) COMP.
@@ -125,6 +147,9 @@
               DECLARE STUDCUR CURSOR FOR  
               SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
            END-EXEC.  
+      * FETCH QUERY
+
+
       * MAYBE MOVE TO INCLUDE ?
            IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
               *> YYYY/MM/DD
@@ -146,9 +171,22 @@
            END-EXEC.
            EXIT.
        PROC-NAKSHATRA-COMPUTE.
+      ****************************************************************** 
+      *
+      ******************************************************************
+           EVALUATE WS-PMONTHDAY *>MONTH DAY
+              WHEN 0413
+                 COMPUTE WS-UNKNOWN-04A = WS-UNKNOWN-04A + 1
+              WHEN 0414 THRU 0426
+                 COMPUTE WS-ASWINI = WS-ASWINI + 1
+              WHEN 0427
+                 COMPUTE WS-UNKNOWN-04B = WS-UNKNOWN-04B + 1
+              WHEN 0528 THRU 0510
+                 COMPUTE WS-BHARANI = WS-BHARANI + 1
+              WHEN 0511
+                 COMPUTE WS-UNKNOWN-05A = WS-UNKNOWN-05A + 1
 
-      *     EVALUATE *>MONTH DAY
-
+           END-EVALUATE
            EXIT.
        PROC-ANALYSE-DATA.
            
