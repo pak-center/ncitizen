@@ -51,16 +51,23 @@
         05 WS-QGENDER  PIC   9.
         05 WS-QALIVE   PIC   9.
        01 WS-QDATE-LIMIT  PIC   X(10).
-       01 WS-QCURRENT-DB2-DATE  PIC   X(10).
+       01 WS-QDATE-CURRENT-DB2  PIC   X(10).
            EXEC SQL END DECLARE SECTION
            END-EXEC.
       *
+      *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
-              DECLARE STUDCUR CURSOR FOR  
+              DECLARE CSR2 CURSOR FOR  
+              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1
+           END-EXEC.
+      *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
+           EXEC SQL  
+              DECLARE CRS1 CURSOR FOR  
               SELECT BDATE, GENDER, ALIVE 
-              INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
+      *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
               FROM CITIZENS
-              WHERE BDATE >= DATE :WS-QDATE-LIMIT 
+              WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
+              FOR FETCH ONLY
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
 
@@ -163,18 +170,17 @@
       ******************************************************************
        PROC-QUERY.
            EXEC SQL
-              OPEN STUDCUR
+              OPEN CSR2
            END-EXEC.
-
-      * START CHECKING DB2 DATE FORMAT
-           EXEC SQL  
-              DECLARE STUDCUR CURSOR FOR  
-              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1
-              INTO :
-           END-EXEC.  
+  
       * FETCH QUERY
-
-
+           EXEC SQL
+              FETCH CSR2
+              INTO  WS-QDATE-CURRENT-DB2
+           END-EXEC
+           
+           EVALUATE SQLCODE
+              WHEN ZERO
       * MAYBE MOVE TO INCLUDE ?
            IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
               *> YYYY/MM/DD
@@ -188,12 +194,49 @@
               DISPLAY 'T'
            END-IF
            END-IF
-      * END CHECKING DB2 DATE FORMAT
-           
+      * END CHECKING DB2 DATE FORMAT                 
+              WHEN OTHER
+      ************** DB2 Error Handling Routine
+           DISPLAY '*************************************************'
+           DISPLAY '**** E R R O R M E S S A G E S ****'
+           DISPLAY '*************************************************'
+           DISPLAY '* Problem in paragraph: ' ws-paragraph
+           DISPLAY '* Problem-msg: ' ws-error-msg
+           DISPLAY '*'
+           DISPLAY '* SQLCODE: ' SQLCODE
+           DISPLAY '*************************************************'
+           CALL "CEE3ABD" USING ABEND-CODE , TIMING           
+           END-EVALUATE
+           EXEC SQL
+              CLOSE CSR2
+           END-EXEC.     
+           EXEC SQL
+              OPEN CSR1
+           END-EXEC.
+
 
            EXEC SQL
-              CLOSE STUDCUR
+           SELECT PRIVATE,
+              SEMI_PRIVATE,
+              NUMBER_OF_BEDS,
+              SPECIAL_EQUIPMENT
+           INTO
+              :DCLROOM-DATA.PRIVATE,
+              :DCLROOM-DATA.SEMI-PRIVATE,
+              :DCLROOM-DATA.NUMBER-OF-BEDS,
+              :DCLROOM-DATA.SPECIAL-EQUIPMENT
+             FROM SCHEMA.EMPL
+             WHERE WARD_ID = :DCLROOM-DATA.WARD-ID
+             AND   ROOM_ID = :DCLROOM-DATA.ROOM-ID
            END-EXEC.
+
+
+           EXEC SQL
+              CLOSE CSR1
+           END-EXEC.   
+
+
+
            EXIT.
        PROC-NAKSHATRA-COMPUTE.
       ****************************************************************** 
