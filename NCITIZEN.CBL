@@ -120,13 +120,13 @@
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
                        RECV01-INTERVAL-VAL INDEXED BY I.
-         10 RECV01-MALE            PIC   9(9) COMP-5.
-         10 RECV01-FEMALE          PIC   9(9) COMP-5.
-         10 RECV01-ALIVE           PIC   9(9) COMP-5.
-         10 RECV01-DEAD            PIC   9(9) COMP-5.
-         10 RECV01-NTAB OCCURS 27 TIMES.
-          15 WS-N                  PIC   9(9) COMP-5.
-          15 WS-U                  PIC   9(9) COMP-5.
+         15 RECV01-MALE            PIC   9(9) COMP-5.
+         15 RECV01-FEMALE          PIC   9(9) COMP-5.
+         15 RECV01-ALIVE           PIC   9(9) COMP-5.
+         15 RECV01-DEAD            PIC   9(9) COMP-5.
+         15 RECV01-NTAB OCCURS 27 TIMES.
+          20 WS-N                  PIC   9(9) COMP-5.
+          20 WS-U                  PIC   9(9) COMP-5.
         05 RECV01-SUMMARY.
          
          10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
@@ -275,9 +275,9 @@
               :WS-QALIVE,
            FROM CITIZENS
       *     WHERE BDATE >= DATE :WS-QDATE-LIMIT
-           WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
-           AND :WS-QDATE-UPPER-DB2  
-      *       AND   X = :Y
+            WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2
+            AND :WS-QDATE-UPPER-DB2
+      *      AND   X = :Y
            END-EXEC
            
            IF (SQLCODE NOT = 0 AND 100) THEN
@@ -524,6 +524,6 @@
            END-WRITE.
            CLOSE RECLOG.
            EXIT.
-      *TODO: FEATURE IF JCL PARM IS D,
+      *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT
        PARA-READ-FROM-DATASET.
            EXIT.
