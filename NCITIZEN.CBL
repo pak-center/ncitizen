@@ -27,12 +27,14 @@
       *          TRAINING AND COGNITIVE OBJECTIVES OF COBOL:
       *                      -SQL TO DB2 CONNECTION
       *                      -EMBEDDED SQL
-      *                      -RECORDS WRITE TO THE DATASET
+      *                      -READ/WRITE RECORDS TO THE DATASET
       *          SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
-      *          PLUS JCL FILE TO RUN WITH DD EXAMPLE
+      *          PLUS JCL FILE TO RUN WITH DD EXAMPLE AND FOR PARM
       ******************************************************************
       *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR
       *    THE LAST 120 YEARS WITH 10 YEARS INTERVALS AS DEFAULT
+      *    FIRST PARM IS Q OR D. Q=SQL, D=DATASET LIKE PARM='Q,120'
+      *    THIS FEATURE NEEDS IMPLEMENTATION - ARG PART, ADD FD FOR READ 
       ******************************************************************
       *    JCL PARM='010' EQ 12 TABLES FOR EVERY 10 YEARS FROM 120
       *    JCL PARM='001' EQ 120 TABLES FOR EVERY YEAR FROM 120
@@ -41,10 +43,10 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL. 
-       SELECT RECLOG ASSIGN TO NCLOG
-       ORGANIZATION IS SEQUENTIAL
-       ACCESS MODE IS SEQUENTIAL
-       FILE STATUS IS LK-FS
+           SELECT RECLOG ASSIGN TO NCLOG
+           ORGANIZATION IS SEQUENTIAL
+           ACCESS MODE IS SEQUENTIAL
+           FILE STATUS IS LK-FS
 
        DATA DIVISION.
        FILE SECTION.
@@ -52,8 +54,11 @@
       ******************************************************************
        01 RECV01-DS.
       ******************************************************************       
+      * TODO: BINARY FORM OF DATA INSIDE THE STRUCTURE
       ******************************************************************
-      
+        05 RECV01-DS-HEADER.
+        05 RECV01-DS-TABLE-STATS.
+        05 RECV01-DS-SUMMARY.
 
       ******************************************************************      
        WORKING-STORAGE SECTION.
@@ -63,23 +68,24 @@
            EXEC SQL  
               INCLUDE SQLCA  
            END-EXEC.
-      *
+      **************
            EXEC SQL BEGIN DECLARE SECTION
            END-EXEC.
        01 WS-QREC01.
-        05 WS-QBDATE   PIC   X(10).
-        05 WS-QGENDER  PIC   9.
-        05 WS-QALIVE   PIC   9.
-       01 WS-QDATE-LIMIT  PIC   X(10).
-       01 WS-QDATE-CURRENT-DB2  PIC   X(10).
+        05 WS-QBDATE            PIC   X(10).
+        05 WS-QGENDER           PIC   9.
+        05 WS-QALIVE            PIC   9.
+       01 WS-QDATE-LOWER-DB2    PIC   X(10).
+       01 WS-QDATE-UPPER-DB2    PIC   X(10).
            EXEC SQL END DECLARE SECTION
            END-EXEC.
-      *
+      **************
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
               DECLARE CSR2 CURSOR FOR  
               SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1
            END-EXEC.
+      **************
       *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
            EXEC SQL  
               DECLARE CRS1 CURSOR FOR  
@@ -87,22 +93,57 @@
       *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
               FROM CITIZENS
       **        WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
-              WHERE BDATE BETWEEN :WS-QDATE-CURRENT-DB2
-              AND :WS-QDATE-LIMIT        
+              WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2
+              AND :WS-QDATE-UPPER-DB2        
               FOR FETCH ONLY
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
       ******************************************************************
       *  END OF SQL VARIABLES & STRUCTURES
       ****************************************************************** 
-
-       01 WS-ALL.
+      ******************************************************************       
+      *    RECORDS RELATED WITH FD AND RECORDS INSIDE DATASET
+      *    STRUCTURE IS BINARY
+      *    STRUCTURE MUST BE READ BY PGM AND PRINT - DISPLAY TO THE USER
+      ******************************************************************
+       01 RECV01.
+      ******************************************************************
+        05 RECV01-HEADER.
+         10 RECV01-HLINE           PIC   X(40) VALUES ALL '*'.
+         10 FILLER                 PIC   X(40) VALUES ALL '@'.
+      *
+         10 RECV01-USER            PIC   X(8).
+         10 RECV01-CURRENT-DATE    PIC   X(10).  
+         10 RECV01-INTERVAL-VAL    PIC   9(3).  
+         
+      * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
+        05 RECV01-TABLE-STATS.
+         10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
+                       RECV01-INTERVAL-VAL INDEXED BY I.
+         10 RECV01-MALE            PIC   9(9) COMP-5.
+         10 RECV01-FEMALE          PIC   9(9) COMP-5.
+         10 RECV01-ALIVE           PIC   9(9) COMP-5.
+         10 RECV01-DEAD            PIC   9(9) COMP-5.
+         10 RECV01-NTAB OCCURS 27 TIMES.
+          15 WS-N                  PIC   9(9) COMP-5.
+          15 WS-U                  PIC   9(9) COMP-5.
+        05 RECV01-SUMMARY.
+         
+         10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
+         10 RECV01-S-TALIVE-CP     PIC   9(9) COMP-5.
+         10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
+         10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
+      ******************************************************************        
+      * THIS PART MUST BE REWRITTEN AND REMOVED TO RECV01
+       01 WS-INPUT.
          05 WS-ARGS.
-          10 WS-INTERVAL-VAL          PIC   9(4).
-          88 PASS VALUES ARE 01 THRU 120.
-         05 WS-ADATE                  PIC   9(8).
-         05 WS-USER                   PIC   X(8).
+           15 WS-MODE                 PIC   A. *> 'Q' OR 'D'
+           15 WS-SEPARATOR            PIC   X VALUE ','.
+           15 WS-INTERVAL-VAL         PIC   9(3).
+           88 PASS VALUES ARE 01 THRU 120.
+         05 WS-ADATE                  PIC   X(8).
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
+      *********   
                  *> IT GOES TO DATASET OUTPUT 
          05 WS-WREC01 OCCURS 1 TO 120 TIMES DEPENDING ON 
                                          WS-INTERVAL-VAL.
@@ -111,52 +152,22 @@
             15 WS-W-MONTH                  PIC   99.
             15 WS-W-DAY                    PIC   99.
            10 WS-W-GENDER              PIC   9.
-           10 WS-W-ALIVE               PIC   9.
+           10 WS-W-ALIVE               PIC  9.
       
       ******************************************************************
       * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
-       01-WS-STATS.
+       01 WS-STATS.
         05 WS-MONTH-DAY      PIC   9(4).  
 
-        05 WS-CTAB. *> OCCURS 1 TO 10 TIMES DEP ON
-         10 WS-NTAB OCCURS 27 TIMES.
-          15 WS-N   PIC   9(9) COMP-5.
-          14 WS-U   PIC   9(9) COMP-5.
-      *  05 WS-NTAB-NAMES
-
-      * 'ASWINI'
-      * 'BHARANI'
-      * 'KRITTIKA'
-      * 'ROHINI'
-      * 'MRIGASIRA'
-      * 'ARDRA'
-      * 'PUNARVASU' 
-      * 'PUSJA'    
-      * 'ASZLESZA'      
-      * 'MAGHA'
-      * 'PURVA PHALGUNI'
-      * 'UTTARA PHALGUNI'
-      * 'HASTA'
-      * 'CAJTRA'      
-      * 'SWATI'      
-      * 'WAJSIAKHA'      
-      * 'ANURADHA'      
-      * 'DZJESZTHA'      
-      * 'MULA'      
-      * 'PURVA ASZADHA'      
-      * 'UTTARA ASZADHA'      
-      * 'SRAWANA'      
-      * 'DHANISZTA'      
-      * 'SATABHISZAK'      
-      * 'PURVA BHADRA'      
-      * 'UTTARA BHADRA'
-      * 'REVATI'
-      
-      
-      
-      
-      
+      *  05 WS-CTAB. *> OCCURS 1 TO 10 TIMES DEP ON -OLD IDEA
+      *   10 WS-NTAB OCCURS 27 TIMES.
+      *    15 WS-N   PIC   9(9) COMP-5.
+      *    15 WS-U   PIC   9(9) COMP-5.
+      ******************************************************************
+      * FOR ABEND CALL ROUTINE (SQL QUERY ERROR)
+       01  ABEND-CODE                 PIC S9(9) BINARY.
+       01  TIMING                     PIC S9(9) BINARY.
       ******************************************************************
        LINKAGE SECTION.
        01 PARM-BUFFER.
@@ -167,6 +178,9 @@
       *    PROCEDURE DIVISION
       ******************************************************************
        PROCEDURE DIVISION USING PARM-BUFFER, LK-FS.
+      ******************************************************************
+      *  LEGACY ARGS CHECKING, NEEDS FIX FOR ONE MORE PARAM 
+      *  E.G.  IS (120) MUST BE (D,1) OR (Q,120) 
            IF NOT PARM-LENGTH > 0 THEN
               DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
@@ -181,13 +195,16 @@
               MOVE 10 TO WS-INTERVAL-VAL
               MOVE 2 TO RETURN-CODE
            ELSE
-              ACCEPT WS-ADATE   FROM DATE YYYYMMDD
-              ACCEPT WS-USER    FROM USERNAME
-      D    DISPLAY 'DEBUG: ', WS-INTERVAL-VAL, 'PARAMETER FROM JCL'
-      D    DISPLAY 'DEBUG: ', WS-USER, WS-ADATE, 'USER, CURRENT DATE'
+              ACCEPT WS-ADATE       FROM DATE YYYYMMDD
+              ACCEPT RECV01-USER    FROM USERNAME
+      D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
+      D    DISPLAY 'DEBUG: ', RECV01-USER, WS-ADATE, 'USER, CURRENT DATE'
+      ******************************************************************
+           SET I TO 1 *> INITIALIZE INDEX
               PERFORM PARA-SQL-QUERIES
               *> CATCH STH IF ERR ?
               PERFORM PARA-ANALYSE-DATA
+              PERFORM PARA-CREATE-VIEW
               PERFORM PARA-WRITE-TO-DATASET
               
       *        MOVE 0 TO RETURN-CODE
@@ -198,7 +215,7 @@
       ******************************************************************
       * STOP RUN PGM
       ******************************************************************
-      PARA-SQL-QUERIES.
+       PARA-SQL-QUERIES.
            EXEC SQL
               OPEN CSR2
            END-EXEC.
@@ -214,14 +231,14 @@
       *****************************************
            IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
               *> YYYY/MM/DD
-              DISPLAY 'T'
+              DISPLAY 'TEST'
            ELSE 
               IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
                  *> MM/DD/YYYY
-                 DISPLAY 'T'
+                 DISPLAY 'TESY'
               ELSE
                  *> MM/DD/YYY
-                 DISPLAY 'T'
+                 DISPLAY 'TEST'
               END-IF
            END-IF
       * END CHECKING DB2 DATE FORMAT  
@@ -258,8 +275,8 @@
               :WS-QALIVE,
            FROM CITIZENS
       *     WHERE BDATE >= DATE :WS-QDATE-LIMIT
-           WHERE BDATE BETWEEN :WS-QDATE-CURRENT-DB2
-           AND :WS-QDATE-LIMIT  
+           WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
+           AND :WS-QDATE-UPPER-DB2  
       *       AND   X = :Y
            END-EXEC
            
@@ -287,8 +304,25 @@
       ****************************************************************** 
       *
       ******************************************************************
-           
-           EVALUATE WS-MONTH-DAY *>MONTH DAY
+              *> WS-QBDATE
+              *> WS-QGENDER
+              *> WS-QALIVE
+      *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
+      *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
+           EVALUATE WS-W-GENDER
+              WHEN 1
+              COMPUTE RECV01-MALE(I) = RECV01-MALE(I) + 1
+              WHEN 0
+              COMPUTE RECV01-FEMALE(I) = RECV01-FEMALE(I) + 1
+           END-EVALUATE
+           EVALUATE WS-W-GENDER
+              WHEN 1
+              COMPUTE RECV01-ALIVE(I) = RECV01-ALIVE(I) + 1
+              WHEN 0
+              COMPUTE RECV01-DEAD(I) = RECV01-DEAD(I) + 1
+           END-EVALUATE
+              
+           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
               WHEN 0414 THRU 0426
@@ -409,20 +443,87 @@
            
            EXIT.
        PARA-ANALYSE-DATA.
-           
            EXIT.
+       PARA-CREATE-VIEW.       
+      ******************************************************************
+      *    WELCOME SCREEN MSG
+      ******************************************************************
+           DISPLAY RECV01-HLINE
+           DISPLAY RECV01-HLINE
+           DISPLAY RECV01-HLINE
+           DISPLAY 'NCITIZEN - (VEDIC ASTROLOGY) NAKSHATRA CITIZEN',
+           ' SOFTWARE'
+           DISPLAY 'SUBMITTED FOR USER: ', RECV01-USER,
+           ' AT ', RECV01-CURRENT-DATE
+           DISPLAY 'INTERVAL SET TO: ', RECV01-INTERVAL-VAL
+           DISPLAY RECV01-HLINE
+      ******************************************************************
+      *    TABLE STATISTICS AND % VIEW
+      ******************************************************************
+           
+
+
+
+      *NTAB-NAMES
+      * 'ASWINI'
+      * 'BHARANI'
+      * 'KRITTIKA'
+      * 'ROHINI'
+      * 'MRIGASIRA'
+      * 'ARDRA'
+      * 'PUNARVASU' 
+      * 'PUSJA'    
+      * 'ASZLESZA'      
+      * 'MAGHA'
+      * 'PURVA PHALGUNI'
+      * 'UTTARA PHALGUNI'
+      * 'HASTA'
+      * 'CAJTRA'      
+      * 'SWATI'      
+      * 'WAJSIAKHA'      
+      * 'ANURADHA'      
+      * 'DZJESZTHA'      
+      * 'MULA'      
+      * 'PURVA ASZADHA'      
+      * 'UTTARA ASZADHA'      
+      * 'SRAWANA'      
+      * 'DHANISZTA'      
+      * 'SATABHISZAK'      
+      * 'PURVA BHADRA'      
+      * 'UTTARA BHADRA'
+      * 'REVATI'
+      ******************************************************************
+      *    SUMMARY
+      ****************************************************************** 
+           DISPLAY RECV01-HLINE
+           DISPLAY RECV01-HLINE(1:1), '  ', 'SUMMARY' 
+           DISPLAY RECV01-HLINE
+           
+           DISPLAY 'TOTAL CITIZEN POPULATION: ', RECV01-S-TOTAL-CP
+           DISPLAY 'ALIVE COTIZEN POPULATION: ', RECV01-S-TALIVE-CP
+           DISPLAY 'MAXIMUM NAKSHATRA QUANTITY IN POPULATION: ',
+            RECV01-S-NMAX-PQ
+           DISPLAY 'MINIMUM NAKSHATRA QUANTITY IN POPULATION: ',
+            RECV01-S-NMIN-PQ
+           
+           DISPLAY RECV01-HLINE
+           EXIT.
+      ******************************************************************
        PARA-WRITE-TO-DATASET.
-           OPEN EXTEND RECLOG.  *> OUTPUT TO ERASE EXISTING LOG
+           OPEN EXTEND RECLOG.  *> OUTPUT TO NOT ERASE EXISTING LOG
            EVALUATE LK-FS       *> FILE STATUS
-              WHEN 35           *>CAN NOT OPEN DS
+              WHEN 35           *> CAN NOT OPEN DS
            DISPLAY 'WARNING: ',
            'PRINT ONLY TO SPOOL, DATASET CAN NOT BE OPEN'
-              WHEN 05           *>DS DOES NOT EXIST, CREATING NEW DS
+              WHEN 05           *> DS DOES NOT EXIST, CREATING NEW DS
            DISPLAY 'INFO:    ',
            'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
            END-EVALUATE
-           MOVE WS-RECV01 TO RECV01-DS
-           WRITE REC01-DS
+           MOVE RECV01 TO RECV01-DS
+           WRITE RECV01-DS
            END-WRITE.
            CLOSE RECLOG.
+           EXIT.
+      *TODO: FEATURE IF JCL PARM IS D,
+       PARA-READ-FROM-DATASET.
            EXIT.
