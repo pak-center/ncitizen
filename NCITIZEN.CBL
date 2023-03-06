@@ -41,10 +41,25 @@
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
+       FILE-CONTROL. 
+       SELECT RECLOG ASSIGN TO NCLOG
+       ORGANIZATION IS SEQUENTIAL
+       ACCESS MODE IS SEQUENTIAL
 
        DATA DIVISION.
        FILE SECTION.
+       FD RECLOG.
+      ******************************************************************
+       01 RECV01-DS.
+      ******************************************************************       
+      ******************************************************************
+
+
+      ******************************************************************      
        WORKING-STORAGE SECTION.
+      ******************************************************************
+      *  BEGIN SQL VARIABLES & STRUCTURES
+      ****************************************************************** 
            EXEC SQL  
               INCLUDE SQLCA  
            END-EXEC.
@@ -75,7 +90,9 @@
               FOR FETCH ONLY
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
-
+      ******************************************************************
+      *  END OF SQL VARIABLES & STRUCTURES
+      ****************************************************************** 
 
        01 WS-ALL.
          05 WS-ARGS.
@@ -382,5 +399,9 @@
            
            EXIT.
        PROC-WRITE-TO-DATASET.
-
+           OPEN EXTEND RECLOG. *> OUTPUT TO ERASE EXISTING LOG
+           MOVE WS-RECV01 TO RECV01-DS
+           WRITE REC01-DS
+           END-WRITE.
+           CLOSE RECLOG.
            EXIT.
