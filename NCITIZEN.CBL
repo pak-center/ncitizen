@@ -10,6 +10,8 @@
       *          COUNTED IN VARIABLES AND MOVED TO PROPER BOUNDRIES
       *          AND GROUPS OF NAKSHATRAS, AGE
       *          LAST BUT NOT LEAST IT DOES PERCENTAGE STATISTICS
+      *          SHOWS GRAPHS LIKE: 40% = |####      |
+      *                             90% = |######### |
       *
       ******************************************************************
       *          COPYRIGHT:  GNU GPLV3 LICENSE 2023
@@ -25,14 +27,17 @@
       *          TRAINING AND COGNITIVE OBJECTIVES OF COBOL:
       *                      -SQL TO DB2 CONNECTION
       *                      -EMBEDDED SQL
-      *                      -RECORDS WRITE TO DATASET
-      *          NO INCLUDES, COPYBOOKS, CALLS JUST SINGLE FILE
-      *
+      *                      -RECORDS WRITE TO THE DATASET
+      *          SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
+      *          PLUS JCL FILE TO RUN WITH DD EXAMPLE
       ******************************************************************
       *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR EVERY 120 YEARS
       *       BY 10 YEARS
       *    INPUT-NUMBER 1 TO 10 EXAMPLE 2 FOR 120 BY 10 + 120 BY 10
       *    INTERVAL = CURRENT YEAR - 120 YEARS IF 1 IS SELECTED
+      ******************************************************************
+      *    JCL PARM='1' FOR CURRENT STATISTICS (PEOPLE <= 120 YEARS OLD)
+      *    JCL PARM='2' CURRENT 120 YEARS OLD, 121 - 240 YEARS RANGE
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -180,7 +185,7 @@
            
            EVALUATE SQLCODE
               WHEN ZERO
-      * MAYBE MOVE TO INCLUDE ?
+      *****************************************
            IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
               *> YYYY/MM/DD
               DISPLAY 'T'
@@ -193,7 +198,8 @@
                  DISPLAY 'T'
               END-IF
            END-IF
-      * END CHECKING DB2 DATE FORMAT                 
+      * END CHECKING DB2 DATE FORMAT  
+      ******************************************               
               WHEN OTHER
       ************** DB2 Error Handling Routine
            DISPLAY '*************************************************'
@@ -206,6 +212,7 @@
            DISPLAY '*************************************************'
            CALL "CEE3ABD" USING ABEND-CODE , TIMING           
            END-EVALUATE
+      ******************************************************************     
            EXEC SQL
               CLOSE CSR2
            END-EXEC.     
