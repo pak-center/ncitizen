@@ -31,13 +31,12 @@
       *          SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
       *          PLUS JCL FILE TO RUN WITH DD EXAMPLE
       ******************************************************************
-      *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR EVERY 120 YEARS
-      *       BY 10 YEARS
-      *    INPUT-NUMBER 1 TO 10 EXAMPLE 2 FOR 120 BY 10 + 120 BY 10
-      *    INTERVAL = CURRENT YEAR - 120 YEARS IF 1 IS SELECTED
+      *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR
+      *    THE LAST 120 YEARS WITH 10 YEARS INTERVALS AS DEFAULT
       ******************************************************************
-      *    JCL PARM='1' FOR CURRENT STATISTICS (PEOPLE <= 120 YEARS OLD)
-      *    JCL PARM='2' CURRENT 120 YEARS OLD, 121 - 240 YEARS RANGE
+      *    JCL PARM='010' EQ 12 TABLES FOR EVERY 10 YEARS FROM 120
+      *    JCL PARM='001' EQ 120 TABLES FOR EVERY YEAR FROM 120
+      *    JCL PARM='120' EQ 1 TABLE FOR ALL 120 YEARS OF STATISTICS
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -45,6 +44,7 @@
        SELECT RECLOG ASSIGN TO NCLOG
        ORGANIZATION IS SEQUENTIAL
        ACCESS MODE IS SEQUENTIAL
+       FILE STATUS IS LK-FS
 
        DATA DIVISION.
        FILE SECTION.
@@ -53,7 +53,7 @@
        01 RECV01-DS.
       ******************************************************************       
       ******************************************************************
-
+      
 
       ******************************************************************      
        WORKING-STORAGE SECTION.
@@ -86,7 +86,9 @@
               SELECT BDATE, GENDER, ALIVE 
       *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
               FROM CITIZENS
-              WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
+      **        WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
+              WHERE BDATE BETWEEN :WS-QDATE-CURRENT-DB2
+              AND :WS-QDATE-LIMIT        
               FOR FETCH ONLY
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
@@ -97,12 +99,12 @@
        01 WS-ALL.
          05 WS-ARGS.
           10 WS-INTERVAL-VAL          PIC   9(4).
-          88 PASS VALUES ARE 01 THRU 10.
+          88 PASS VALUES ARE 01 THRU 120.
          05 WS-ADATE                  PIC   9(8).
          05 WS-USER                   PIC   X(8).
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
                  *> IT GOES TO DATASET OUTPUT 
-         05 WS-WREC01 OCCURS 1 TO 10 TIMES DEPENDING ON 
+         05 WS-WREC01 OCCURS 1 TO 120 TIMES DEPENDING ON 
                                          WS-INTERVAL-VAL.
            10 WS-W-DATE                PIC   X(10).
             15 WS-W-YEAR                   PIC   9(4).
@@ -155,41 +157,48 @@
       
       
       
-      *************************************
+      ******************************************************************
        LINKAGE SECTION.
        01 PARM-BUFFER.
          05 PARM-LENGTH               PIC   S9(4) COMP.
          05 PARM-DATA                 PIC   X(256).
-       PROCEDURE DIVISION USING PARM-BUFFER.
+       01 LK-FS                       PIC   99.
+      ******************************************************************
+      *    PROCEDURE DIVISION
+      ******************************************************************
+       PROCEDURE DIVISION USING PARM-BUFFER, LK-FS.
            IF NOT PARM-LENGTH > 0 THEN
               DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
-              'AUTO COMPLEMENT INTERVAL SET TO 1'
-              MOVE 1 TO WS-INTERVAL-VAL
+              'AUTO COMPLEMENT INTERVAL SET TO 10'
+              MOVE 10 TO WS-INTERVAL-VAL
               MOVE 1 TO RETURN-CODE
            ELSE
-           MOVE PARM-DATA(1:2) TO WS-INTERVAL-VAL
+           MOVE PARM-DATA(1:3) TO WS-INTERVAL-VAL
            IF NOT PASS THEN
               DISPLAY 
-              'WARNING: JCL PARM RANGE IS WRONG. TRY 01 TO 10 ',
-              'AUTO COMPLEMENT INTERVAL SET TO 1'
-              MOVE 1 TO WS-INTERVAL-VAL
+              'WARNING: JCL PARM RANGE IS WRONG. TRY 001 TO 120 ',
+              'AUTO COMPLEMENT INTERVAL SET TO 10'
+              MOVE 10 TO WS-INTERVAL-VAL
               MOVE 2 TO RETURN-CODE
            ELSE
               ACCEPT WS-ADATE   FROM DATE YYYYMMDD
               ACCEPT WS-USER    FROM USERNAME
-
-              PERFORM PROC-QUERY
+      D    DISPLAY 'DEBUG: ', WS-INTERVAL-VAL, 'PARAMETER FROM JCL'
+      D    DISPLAY 'DEBUG: ', WS-USER, WS-ADATE, 'USER, CURRENT DATE'
+              PERFORM PARA-SQL-QUERIES
               *> CATCH STH IF ERR ?
-              PERFORM PROC-ANALYSE-DATA
-              PERFORM PROC-WRITE-TO-DATASET
+              PERFORM PARA-ANALYSE-DATA
+              PERFORM PARA-WRITE-TO-DATASET
               
-              MOVE 0 TO RETURN-CODE
+      *        MOVE 0 TO RETURN-CODE
            END-IF
            END-IF
       D    DISPLAY 'DEBUG: RC=', RETURN-CODE
            STOP RUN.
       ******************************************************************
-       PROC-QUERY.
+      * STOP RUN PGM
+      ******************************************************************
+      PARA-SQL-QUERIES.
            EXEC SQL
               OPEN CSR2
            END-EXEC.
@@ -236,7 +245,8 @@
            EXEC SQL
               OPEN CSR1
            END-EXEC.
-
+      *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
+      *    1 - 120
            PERFORM UNTIL SQLCODE = 100
            EXEC SQL
            SELECT BDATE,
@@ -247,7 +257,9 @@
               :WS-QGENDER,
               :WS-QALIVE,
            FROM CITIZENS
-           WHERE BDATE >= DATE :WS-QDATE-LIMIT
+      *     WHERE BDATE >= DATE :WS-QDATE-LIMIT
+           WHERE BDATE BETWEEN :WS-QDATE-CURRENT-DB2
+           AND :WS-QDATE-LIMIT  
       *       AND   X = :Y
            END-EXEC
            
@@ -264,17 +276,18 @@
            CALL "CEE3ABD" USING ABEND-CODE , TIMING
            END-IF 
       * COMPUTES NAKSHATRA 
-           PERFORM PROC-NAKSHATRA-COMPUTE
+           PERFORM PARA-NAKSHATRA-COMPUTE
            END-PERFORM
 
            EXEC SQL
               CLOSE CSR1
            END-EXEC.   
            EXIT.
-       PROC-NAKSHATRA-COMPUTE.
+       PARA-NAKSHATRA-COMPUTE.
       ****************************************************************** 
       *
       ******************************************************************
+           
            EVALUATE WS-MONTH-DAY *>MONTH DAY
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
@@ -395,11 +408,19 @@
 
            
            EXIT.
-       PROC-ANALYSE-DATA.
+       PARA-ANALYSE-DATA.
            
            EXIT.
-       PROC-WRITE-TO-DATASET.
-           OPEN EXTEND RECLOG. *> OUTPUT TO ERASE EXISTING LOG
+       PARA-WRITE-TO-DATASET.
+           OPEN EXTEND RECLOG.  *> OUTPUT TO ERASE EXISTING LOG
+           EVALUATE LK-FS       *> FILE STATUS
+              WHEN 35           *>CAN NOT OPEN DS
+           DISPLAY 'WARNING: ',
+           'PRINT ONLY TO SPOOL, DATASET CAN NOT BE OPEN'
+              WHEN 05           *>DS DOES NOT EXIST, CREATING NEW DS
+           DISPLAY 'INFO:    ',
+           'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
+           END-EVALUATE
            MOVE WS-RECV01 TO RECV01-DS
            WRITE REC01-DS
            END-WRITE.
