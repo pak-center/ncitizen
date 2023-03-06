@@ -158,7 +158,6 @@
 
               PERFORM PROC-QUERY
               *> CATCH STH IF ERR ?
-              PERFORM PROC-NAKSHATRA-COMPUTE
               PERFORM PROC-ANALYSE-DATA
               PERFORM PROC-WRITE-TO-DATASET
               
@@ -214,29 +213,39 @@
               OPEN CSR1
            END-EXEC.
 
-
+           PERFORM UNTIL SQLCODE = 100
            EXEC SQL
-           SELECT PRIVATE,
-              SEMI_PRIVATE,
-              NUMBER_OF_BEDS,
-              SPECIAL_EQUIPMENT
+           SELECT BDATE,
+                  GENDER,
+                  ALIVE
            INTO
-              :DCLROOM-DATA.PRIVATE,
-              :DCLROOM-DATA.SEMI-PRIVATE,
-              :DCLROOM-DATA.NUMBER-OF-BEDS,
-              :DCLROOM-DATA.SPECIAL-EQUIPMENT
-             FROM SCHEMA.EMPL
-             WHERE WARD_ID = :DCLROOM-DATA.WARD-ID
-             AND   ROOM_ID = :DCLROOM-DATA.ROOM-ID
-           END-EXEC.
-
+              :WS-QBDATE,
+              :WS-QGENDER,
+              :WS-QALIVE,
+           FROM CITIZENS
+           WHERE BDATE >= DATE :WS-QDATE-LIMIT
+      *       AND   X = :Y
+           END-EXEC
+           
+           IF (SQLCODE NOT = 0 AND 100) THEN
+      ************** DB2 Error Handling Routine
+           DISPLAY '*************************************************'
+           DISPLAY '**** E R R O R M E S S A G E S ****'
+           DISPLAY '*************************************************'
+           DISPLAY '* Problem in paragraph: ' ws-paragraph
+           DISPLAY '* Problem-msg: ' ws-error-msg
+           DISPLAY '*'
+           DISPLAY '* SQLCODE: ' SQLCODE
+           DISPLAY '*************************************************'
+           CALL "CEE3ABD" USING ABEND-CODE , TIMING
+           END-IF 
+      * COMPUTES NAKSHATRA 
+           PERFORM PROC-NAKSHATRA-COMPUTE
+           END-PERFORM
 
            EXEC SQL
               CLOSE CSR1
            END-EXEC.   
-
-
-
            EXIT.
        PROC-NAKSHATRA-COMPUTE.
       ****************************************************************** 
