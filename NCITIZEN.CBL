@@ -186,13 +186,13 @@
               *> YYYY/MM/DD
               DISPLAY 'T'
            ELSE 
-           IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
-              *> MM/DD/YYYY
-              DISPLAY 'T'
-           ELSE
-              *> MM/DD/YYY
-              DISPLAY 'T'
-           END-IF
+              IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
+                 *> MM/DD/YYYY
+                 DISPLAY 'T'
+              ELSE
+                 *> MM/DD/YYY
+                 DISPLAY 'T'
+              END-IF
            END-IF
       * END CHECKING DB2 DATE FORMAT                 
               WHEN OTHER
@@ -359,6 +359,8 @@
       *           COMPUTE WS-U(I,27) = WS-U(I,) + 1
 
            END-EVALUATE
+
+           
            EXIT.
        PROC-ANALYSE-DATA.
            
