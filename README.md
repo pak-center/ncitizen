@@ -9,9 +9,10 @@ Afterwards, does the analytics and displays the statistics. At the end, writes t
 ## CODE STILL IN DEVELOPMENT PHASE
 
 **TODO**
+- optimaze SQL multi rows query for single row queries and move some PGM logic to SQL and advance queries for calculation on DB2 side (give choice to user in JCL PARAM to choose: adv sql queries or single simple query)
 - clean code related with records and variables
 - refactor multiplied code (more PARAGRAPHS)
-- add write RECORDS to QSAM dataset VB800 as backup and for future READ to only DISPLAY (no SQL Queries)
+- add WRITE RECORDS to QSAM dataset VB800 as backup and for future READ only FOR DISPLAY (no SQL Queries)
 - DISPLAY TO SPOOL user frendly reports
 - create sample JCL for SUB
 

@@ -44,6 +44,10 @@
       *       120 / 40 = 3 CORRECT, 120 / 70 = 1,7 WRONG
       *       WHEN WRONG NR IS GIVEN PGM SETS IT TO DEFAULT 10 AS BELOW
       *       120 / 10 = 12 INTERVALS FOR 10 YEARS LONG
+      *
+      *    MULTIPLE ROWS SQL QUERY FOR ALL NAKSHATRAS IS NOT EFFICIENT!
+      *    CHANGES IT TO ONE ROW SQL QUERIES FOR EVERY NAKSHATRA
+      *    
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -131,10 +135,11 @@
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
                        RECV01-INTERVAL-COUNT INDEXED BY I.
-         15 RECV01-MALE            PIC   9(9) COMP-5. *>(18) MAX
-         15 RECV01-FEMALE          PIC   9(9) COMP-5.
-         15 RECV01-ALIVE           PIC   9(9) COMP-5.
-         15 RECV01-DEAD            PIC   9(9) COMP-5.
+         15 RECV01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
+          20 RECV01-MALE           PIC   9(9) COMP-5. *>(18) MAX
+          20 RECV01-FEMALE         PIC   9(9) COMP-5.
+      *  15 RECV01-ALIVE           PIC   9(9) COMP-5.
+      *  15 RECV01-DEAD            PIC   9(9) COMP-5.
          15 RECV01-NTAB OCCURS 27 TIMES.
           20 WS-N                  PIC   9(9) COMP-5.
           20 WS-U                  PIC   9(9) COMP-5.
@@ -154,6 +159,7 @@
            88 PASS VALUES ARE 01 THRU 120.
       *******************************************
          05 WS-ADATE                  PIC   X(8).
+         05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
       *********   
       *     10 WS-W-DATE                PIC   X(10).
@@ -289,8 +295,9 @@
               :WS-QALIVE,
            FROM CITIZENS 
             WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
-            AND :WS-QDATE-UPPER-DB2 
+           AND :WS-QDATE-UPPER-DB2 
            END-EXEC 
+
            
            IF (SQLCODE NOT = 0 AND 100) THEN
       ************** DB2 Error Handling Routine
@@ -321,20 +328,25 @@
               *> WS-QALIVE
       *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
-           EVALUATE WS-QGENDER
-              WHEN 1
-              COMPUTE RECV01-MALE(I) = RECV01-MALE(I) + 1
-              WHEN 0
-              COMPUTE RECV01-FEMALE(I) = RECV01-FEMALE(I) + 1
-           END-EVALUATE
+
            EVALUATE WS-QALIVE
               WHEN 1
-              COMPUTE RECV01-ALIVE(I) = RECV01-ALIVE(I) + 1
+           EVALUATE WS-QGENDER
+              WHEN 1
+              COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1
               WHEN 0
-              COMPUTE RECV01-DEAD(I) = RECV01-DEAD(I) + 1
+              COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1
+           END-EVALUATE 
+              WHEN 2 *> DEAD
+           EVALUATE WS-QGENDER
+              WHEN 1
+              COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1
+              WHEN 0
+              COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1
+           END-EVALUATE       
            END-EVALUATE
               
-           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE
+           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE TODO
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
               WHEN 0414 THRU 0426
@@ -471,16 +483,25 @@
            DISPLAY RECV01-HLINE
       ******************************************************************
       *    TABLE STATISTICS AND % VIEW
-      ******************************************************************
-           
+      ****************************************************************** 
+      *LOOP FOR TABLES PRINT
            PERFORM RECV01-INTERVAL-COUNT TIMES 
            DISPLAY RECV01-HLINE 
-           
+           DISPLAY 'TABLE ', WS-TAB-COUNTER,
+           ' FROM ',RECV01-INTERVAL-COUNT
+           DISPLAY RECV01-HLINE 
+           COMPUTE WS-TAB-COUNTER = WS-TAB-COUNTER + 1
       *PART FOR SUMMARY
-           ADD RECV01-FEMALE RECV01-MALE TO RECV01-S-TOTAL-CP
+      ***
+           ADD RECV01-FEMALE(1) RECV01-MALE(1) *> ALIVE
+               RECV01-FEMALE(2) RECV01-MALE(2) *> DEAD
+           TO RECV01-S-TOTAL-CP
            ON SIZE ERROR DISPLAY 'PANIC: ',
            'PIC CLAUSE RECV01-S-TOTAL-CP ',
            'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
+      ***
+           SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
+           FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
            DISPLAY RECV01-HLINE
            END-PERFORM
       *NTAB-NAMES
