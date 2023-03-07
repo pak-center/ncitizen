@@ -42,7 +42,7 @@
       *    WARNING
       *       NUMBER MUST GIVES MOD 0 WHEN DIVIDING 120 BY IT E.G.
       *       120 / 40 = 3 CORRECT, 120 / 70 = 1,7 WRONG
-      *       WHEN WRONG NR IS GIVEN PGM SET IT TO DEFAULT 10
+      *       WHEN WRONG NR IS GIVEN PGM SETS IT TO DEFAULT 10 AS BELOW
       *       120 / 10 = 12 INTERVALS FOR 10 YEARS LONG
       ******************************************************************
        ENVIRONMENT DIVISION.
