@@ -114,6 +114,10 @@
        01 RECV01.
       ******************************************************************
         05 RECV01-HEADER.
+         10 RECV01-RLENGTH         PIC   9(4) COMP-5. *> 65535
+         10 FILLER                 PIC   X(76).
+         10 RECV01-CRC             PIC   A(30) VALUE 
+                                   'AUTHOR: PRZEMYSLAW ADAM KUPISZ'.
          10 RECV01-HLINE           PIC   X(40) VALUES ALL '*'.
          10 FILLER                 PIC   X(40) VALUES ALL '@'.
       *
@@ -126,8 +130,8 @@
       * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
-                       RECV01-INTERVAL-VAL INDEXED BY I.
-         15 RECV01-MALE            PIC   9(9) COMP-5.
+                       RECV01-INTERVAL-COUNT INDEXED BY I.
+         15 RECV01-MALE            PIC   9(9) COMP-5. *>(18) MAX
          15 RECV01-FEMALE          PIC   9(9) COMP-5.
          15 RECV01-ALIVE           PIC   9(9) COMP-5.
          15 RECV01-DEAD            PIC   9(9) COMP-5.
@@ -141,26 +145,21 @@
          10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
          10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
       ******************************************************************        
-      * THIS PART MUST BE REWRITTEN AND REMOVED TO RECV01
+      * THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
        01 WS-INPUT.
          05 WS-ARGS.
            15 WS-MODE                 PIC   A. *> 'Q' OR 'D'
            15 WS-SEPARATOR            PIC   X VALUE ','.
            15 WS-INTERVAL-VAL         PIC   9(3).
            88 PASS VALUES ARE 01 THRU 120.
+      *******************************************
          05 WS-ADATE                  PIC   X(8).
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
       *********   
-                 *> IT GOES TO DATASET OUTPUT 
-         05 WS-WREC01 OCCURS 1 TO 120 TIMES DEPENDING ON 
-                                         WS-INTERVAL-VAL.
-           10 WS-W-DATE                PIC   X(10).
-            15 WS-W-YEAR                   PIC   9(4).
-            15 WS-W-MONTH                  PIC   99.
-            15 WS-W-DAY                    PIC   99.
-           10 WS-W-GENDER              PIC   9.
-           10 WS-W-ALIVE               PIC  9.
-      
+      *     10 WS-W-DATE                PIC   X(10).
+      *      15 WS-W-YEAR                   PIC   9(4).
+      *      15 WS-W-MONTH                  PIC   99.
+      *      15 WS-W-DAY                    PIC   99.
       ******************************************************************
       * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
@@ -173,8 +172,8 @@
       *    15 WS-U   PIC   9(9) COMP-5.
       ******************************************************************
       * FOR ABEND CALL ROUTINE (SQL QUERY ERROR) 
-       01  ABEND-CODE                 PIC S9(9) BINARY.
-       01  TIMING                     PIC S9(9) BINARY.
+       01  ABEND-CODE                 PIC   S9(9) BINARY.
+       01  TIMING                     PIC   S9(9) BINARY.
       ******************************************************************
        LINKAGE SECTION.
        01 PARM-BUFFER.
@@ -322,13 +321,13 @@
               *> WS-QALIVE
       *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
-           EVALUATE WS-W-GENDER
+           EVALUATE WS-QGENDER
               WHEN 1
               COMPUTE RECV01-MALE(I) = RECV01-MALE(I) + 1
               WHEN 0
               COMPUTE RECV01-FEMALE(I) = RECV01-FEMALE(I) + 1
            END-EVALUATE
-           EVALUATE WS-W-GENDER
+           EVALUATE WS-QALIVE
               WHEN 1
               COMPUTE RECV01-ALIVE(I) = RECV01-ALIVE(I) + 1
               WHEN 0
@@ -476,7 +475,12 @@
            
            PERFORM RECV01-INTERVAL-COUNT TIMES 
            DISPLAY RECV01-HLINE 
-
+           
+      *PART FOR SUMMARY
+           ADD RECV01-FEMALE RECV01-MALE TO RECV01-S-TOTAL-CP
+           ON SIZE ERROR DISPLAY 'PANIC: ',
+           'PIC CLAUSE RECV01-S-TOTAL-CP ',
+           'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
            DISPLAY RECV01-HLINE
            END-PERFORM
       *NTAB-NAMES
@@ -515,7 +519,7 @@
            DISPLAY RECV01-HLINE
            
            DISPLAY 'TOTAL CITIZEN POPULATION: ', RECV01-S-TOTAL-CP
-           DISPLAY 'ALIVE COTIZEN POPULATION: ', RECV01-S-TALIVE-CP
+           DISPLAY 'ALIVE CITIZEN POPULATION: ', RECV01-S-TALIVE-CP
            DISPLAY 'MAXIMUM NAKSHATRA QUANTITY IN POPULATION: ',
             RECV01-S-NMAX-PQ
            DISPLAY 'MINIMUM NAKSHATRA QUANTITY IN POPULATION: ',
