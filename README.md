@@ -10,8 +10,9 @@ Afterwards, does the analytics and displays the statistics. At the end, writes t
 
 **TODO**
 - clean code related with records and variables
-- refactor multiplied code (more PARAGRAPHS / PROCEDURES)
-- add write to QSAM dataset FB80 for user frendly reports
+- refactor multiplied code (more PARAGRAPHS)
+- add write RECORDS to QSAM dataset VB800 as backup and for future READ to only DISPLAY (no SQL Queries)
+- DISPLAY TO SPOOL user frendly reports
 - create sample JCL for SUB
 
 --- 

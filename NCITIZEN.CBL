@@ -82,8 +82,8 @@
       **************
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
-              DECLARE CSR2 CURSOR FOR  
-              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1
+              DECLARE CSR2 CURSOR FOR 
+              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
            END-EXEC.
       **************
       *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
@@ -91,11 +91,11 @@
               DECLARE CRS1 CURSOR FOR  
               SELECT BDATE, GENDER, ALIVE 
       *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
-              FROM CITIZENS
+              FROM CITIZENS 
       **        WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
-              WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2
-              AND :WS-QDATE-UPPER-DB2        
-              FOR FETCH ONLY
+              WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
+              AND :WS-QDATE-UPPER-DB2 
+              FOR FETCH ONLY 
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
       ******************************************************************
@@ -114,7 +114,9 @@
       *
          10 RECV01-USER            PIC   X(8).
          10 RECV01-CURRENT-DATE    PIC   X(10).  
-         10 RECV01-INTERVAL-VAL    PIC   9(3).  
+         10 RECV01-INTERVAL-VAL    PIC   S9(3).  
+         10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
+         
          
       * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
         05 RECV01-TABLE-STATS.
@@ -165,7 +167,7 @@
       *    15 WS-N   PIC   9(9) COMP-5.
       *    15 WS-U   PIC   9(9) COMP-5.
       ******************************************************************
-      * FOR ABEND CALL ROUTINE (SQL QUERY ERROR)
+      * FOR ABEND CALL ROUTINE (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC S9(9) BINARY.
        01  TIMING                     PIC S9(9) BINARY.
       ******************************************************************
@@ -198,10 +200,18 @@
               ACCEPT WS-ADATE       FROM DATE YYYYMMDD
               ACCEPT RECV01-USER    FROM USERNAME
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
-      D    DISPLAY 'DEBUG: ', RECV01-USER, WS-ADATE, 'USER, CURRENT DATE'
+      D    DISPLAY 'DEBUG: ', RECV01-USER, WS-ADATE,
+      D             'USER, CURRENT DATE'
+      *************************************************
+      *  CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
+      *    DIVIDE 120 BY INTERVAL-VAL     
+           
+           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT
+           *>IMPL CHECKING OF CORRECTIVNESS
+           *>MAYBE CHECKING REMAINDER? AND -1 TO MOD 0 ?
       ******************************************************************
            SET I TO 1 *> INITIALIZE INDEX
-              PERFORM PARA-SQL-QUERIES
+              PERFORM PARA-SQL-QUERIES 
               *> CATCH STH IF ERR ?
               PERFORM PARA-ANALYSE-DATA
               PERFORM PARA-CREATE-VIEW
@@ -215,19 +225,19 @@
       ******************************************************************
       * STOP RUN PGM
       ******************************************************************
-       PARA-SQL-QUERIES.
+       PARA-SQL-QUERIES. 
            EXEC SQL
-              OPEN CSR2
-           END-EXEC.
+              OPEN CSR2 
+           END-EXEC. 
   
       * FETCH QUERY
            EXEC SQL
-              FETCH CSR2
-              INTO  WS-QDATE-CURRENT-DB2
-           END-EXEC
+              FETCH CSR2 
+              INTO  WS-QDATE-CURRENT-DB2 
+           END-EXEC 
            
-           EVALUATE SQLCODE
-              WHEN ZERO
+           EVALUATE SQLCODE 
+              WHEN ZERO 
       *****************************************
            IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
               *> YYYY/MM/DD
@@ -264,21 +274,19 @@
            END-EXEC.
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
-           PERFORM UNTIL SQLCODE = 100
+           PERFORM UNTIL SQLCODE = 100 
            EXEC SQL
-           SELECT BDATE,
-                  GENDER,
-                  ALIVE
-           INTO
-              :WS-QBDATE,
-              :WS-QGENDER,
+           SELECT BDATE, 
+                  GENDER, 
+                  ALIVE 
+           INTO 
+              :WS-QBDATE, 
+              :WS-QGENDER, 
               :WS-QALIVE,
-           FROM CITIZENS
-      *     WHERE BDATE >= DATE :WS-QDATE-LIMIT
-            WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2
-            AND :WS-QDATE-UPPER-DB2
-      *      AND   X = :Y
-           END-EXEC
+           FROM CITIZENS 
+            WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
+            AND :WS-QDATE-UPPER-DB2 
+           END-EXEC 
            
            IF (SQLCODE NOT = 0 AND 100) THEN
       ************** DB2 Error Handling Routine
@@ -461,9 +469,11 @@
       *    TABLE STATISTICS AND % VIEW
       ******************************************************************
            
+           PERFORM RECV01-INTERVAL-COUNT TIMES 
+           DISPLAY RECV01-HLINE 
 
-
-
+           DISPLAY RECV01-HLINE
+           END-PERFORM
       *NTAB-NAMES
       * 'ASWINI'
       * 'BHARANI'
@@ -524,6 +534,6 @@
            END-WRITE.
            CLOSE RECLOG.
            EXIT.
-      *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT
+      *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT TO SPOOL
        PARA-READ-FROM-DATASET.
            EXIT.
