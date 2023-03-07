@@ -39,6 +39,11 @@
       *    JCL PARM='010' EQ 12 TABLES FOR EVERY 10 YEARS FROM 120
       *    JCL PARM='001' EQ 120 TABLES FOR EVERY YEAR FROM 120
       *    JCL PARM='120' EQ 1 TABLE FOR ALL 120 YEARS OF STATISTICS
+      *    WARNING
+      *       NUMBER MUST GIVES MOD 0 WHEN DIVIDING 120 BY IT E.G.
+      *       120 / 40 = 3 CORRECT, 120 / 70 = 1,7 WRONG
+      *       WHEN WRONG NR IS GIVEN PGM SET IT TO DEFAULT 10
+      *       120 / 10 = 12 INTERVALS FOR 10 YEARS LONG
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
