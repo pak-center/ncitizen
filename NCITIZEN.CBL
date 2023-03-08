@@ -91,8 +91,11 @@
         05 WS-QBDATE            PIC   X(10).
         05 WS-QGENDER           PIC   9.
         05 WS-QALIVE            PIC   9.
+       01 WS-QDATE-CURRENT-DB2  PIC   X(10). *>ADD OCCURS 2 TIMES TODO
        01 WS-QDATE-LOWER-DB2    PIC   X(10).
        01 WS-QDATE-UPPER-DB2    PIC   X(10).
+       01 WS-QINTERVAL          PIC   S9(3).
+       01 WS-QDATE-TMP          PIC   S9(3) VALUES ZEROES.
        01 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
@@ -100,7 +103,8 @@
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
               DECLARE CRS2 CURSOR FOR 
-              SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
+              SELECT CURRENT DATE + :WS-QDATE-TMP YEARS 
+              FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
       **************
@@ -196,8 +200,8 @@
           15 RECV01-PGM-START-DATE PIC   99(4)/99/99.
          10 FILLER                 PIC   X(40) VALUES ALL '@'.
       *
-         10 RECV01-USER            PIC   X(8).
-         10 RECV01-CURRENT-DATE    PIC   X(10).  
+         10 RECV01-USER            PIC   X(8).  
+         10 RECV01-CURRENT-DATE-DB2    PIC   X(10).           
          10 RECV01-INTERVAL-VAL    PIC   S9(3).  
          10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
          
@@ -230,7 +234,6 @@
            88 WS-PGM-PASS VALUES ARE 01 THRU 120.
          05 WS-PGM-RESULT                 PIC   S9(3).
          05 WS-PGM-REMINDER               PIC   S9(3).
-      *   05 WS-PGM-MODE               PIC   AA.
       *******************************************
          05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
@@ -306,12 +309,14 @@
            SET I TO 1 *> INITIALIZE INDEX
            EVALUATE WS-PGM-MODE
            WHEN 'SQ' *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
-              PERFORM PARA-SQL-SQ 
+              PERFORM PARA-SQL-DATE-DB2 
+              PERFORM PARA-SQL-SQ *>(PARA-NAKSHATRA-COMPUTE INSIDE)
               PERFORM PARA-ANALYSE-DATA
               PERFORM PARA-CREATE-VIEW
               PERFORM PARA-WRITE-TO-DATASET
            WHEN 'MQ' *> FASTER & EFFCIENT SQL (MULTI) QUERIES
                      *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
+              PERFORM PARA-SQL-DATE-DB2 
               PERFORM PARA-SQL-MQ
               PERFORM PARA-ANALYSE-DATA
               PERFORM PARA-CREATE-VIEW
@@ -320,8 +325,9 @@
               PERFORM PARA-READ-FROM-DATASET
               PERFORM PARA-CREATE-VIEW
            WHEN OTHER
-           DISPLAY 'PANIC: WRONG PARM IN JCL. IS=', WS-PGM-MODE
+           DISPLAY 'WARNING: WRONG PARM IN JCL. IS=', WS-PGM-MODE
            DISPLAY ' NOTHING TO DO... EXITS PGM'
+           MOVE 2 TO RETURN-CODE
            END-EVALUATE
                     
       *        MOVE 0 TO RETURN-CODE
@@ -332,19 +338,23 @@
       ******************************************************************
       * STOP RUN PGM
       ******************************************************************
-       PARA-SQL-SQ. 
+      ******************************************************************
+      *    PARAGRAPH SQL DATE DB2
+      ******************************************************************
+       PARA-SQL-DATE-DB2.
            EXEC SQL
               OPEN CRS2 
-           END-EXEC. 
-  
+           END-EXEC.  
+
       * FETCH QUERY
            EXEC SQL
               FETCH CRS2 
-              INTO  WS-QDATE-CURRENT-DB2 
+              INTO  WS-QDATE-CURRENT-DB2 *>TODO TABLE J 1,2
            END-EXEC 
-           
+
            EVALUATE SQLCODE 
               WHEN ZERO 
+           MOVE WS-QDATE-CURRENT-DB2 TO RECV01-CURRENT-DATE-DB2             
       *****************************************
       *THIS PART OF CODE IS NOT NEEDED
       * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
@@ -374,15 +384,30 @@
            DISPLAY '*************************************************'
            CALL "CEE3ABD" USING ABEND-CODE , TIMING           
            END-EVALUATE
-      ******************************************************************     
+     
            EXEC SQL
               CLOSE CRS2
-           END-EXEC.     
+           END-EXEC.  
+           EXIT.
+      ******************************************************************
+      *    PARAGRAPH SQL SQ     
+      ******************************************************************     
+       PARA-SQL-SQ.    
            EXEC SQL
               OPEN CRS1
            END-EXEC.
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
+           SET I TO 1 
+           MOVE RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL *> NEEDED?
+           *>SETS PROPER DATE FOR QUERY
+           MOVE RECV01-CURRENT-DATE-DB2 TO WS-QDATE-UPPER-DB2
+           *> TODO: ADD RECV01-INTERVAL-VAL AS DATE TO UPPER-DB2
+           *> AS ANOTHER QUERY NEXT TO CURRENT DATE + INTERV. YEARS
+           MOVE RECV01-CURRENT-DATE-DB2 TO WS-QDATE-LOWER-DB2
+           PERFORM RECV01-INTERVAL-COUNT TIMES 
+      ************************************************
+           *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL
            SELECT BDATE, 
@@ -391,11 +416,18 @@
            INTO 
               :WS-QBDATE, 
               :WS-QGENDER, 
-              :WS-QALIVE
+              :WS-QALIVE 
            FROM CITIZENS 
-           WHERE (YEAR(BDATE) BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-           AND YEAR(:WS-QDATE-UPPER-DB2)) 
-           END-EXEC 
+      *     WHERE (YEAR(BDATE) 
+           WHERE BDATE
+           BETWEEN DATE(:WS-QDATE-LOWER-DB2) 
+            - :WS-QINTERVAL YEARS 
+           AND DATE(:WS-QDATE-UPPER-DB2) 
+            - :WS-QINTERVAL YEARS 
+           *> MAYBE ONE MORE SLECT TO EXTRACK NEW DATES ? TODO 
+      *     WHERE (YEAR(BDATE) BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+      *     AND YEAR(:WS-QDATE-UPPER-DB2)) 
+            END-EXEC 
 
            
            IF (SQLCODE NOT = 0 AND 100) THEN
@@ -413,6 +445,12 @@
       * COMPUTES NAKSHATRA 
            PERFORM PARA-NAKSHATRA-COMPUTE
            END-PERFORM
+
+      **************************************************                
+           ADD RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL
+           MOVE WS-PGM-INTERVAL-VAL TO WS-QINTERVAL
+           SET I UP BY 1 
+           END-PERFORM 
 
            EXEC SQL
               CLOSE CRS1
