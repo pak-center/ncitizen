@@ -98,8 +98,9 @@
       **************
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
-              DECLARE CSR2 CURSOR FOR 
+              DECLARE CRS2 CURSOR FOR 
               SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
            END-EXEC.
       **************
       *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING - HEAVY LOAD
@@ -118,6 +119,8 @@
       ******************************************************************
       *ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
       *27 NAKSHATRA WITH VARIATIONS OF QUERIES TODO 
+      ******************************************************************
+      *    4 SQL SQUERIES FOR TOTAL STATS SECTION 
            EXEC SQL 
               DECLARE CRS2001 CURSOR FOR 
               SELECT COUNT(*) *> AS ALIVEMALE 
@@ -302,12 +305,12 @@
       ******************************************************************
        PARA-SQL-QUERIES. 
            EXEC SQL
-              OPEN CSR2 
+              OPEN CRS2 
            END-EXEC. 
   
       * FETCH QUERY
            EXEC SQL
-              FETCH CSR2 
+              FETCH CRS2 
               INTO  WS-QDATE-CURRENT-DB2 
            END-EXEC 
            
@@ -344,10 +347,10 @@
            END-EVALUATE
       ******************************************************************     
            EXEC SQL
-              CLOSE CSR2
+              CLOSE CRS2
            END-EXEC.     
            EXEC SQL
-              OPEN CSR1
+              OPEN CRS1
            END-EXEC.
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
@@ -383,7 +386,7 @@
            END-PERFORM
 
            EXEC SQL
-              CLOSE CSR1
+              CLOSE CRS1
            END-EXEC.   
            EXIT.
        PARA-NAKSHATRA-COMPUTE.
