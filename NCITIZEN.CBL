@@ -46,8 +46,14 @@
       *       120 / 10 = 12 INTERVALS FOR 10 YEARS LONG
       *
       *    MULTIPLE ROWS SQL QUERY FOR ALL NAKSHATRAS IS NOT EFFICIENT!
-      *    CHANGES IT TO ONE ROW SQL QUERIES FOR EVERY NAKSHATRA
-      *    
+      *    BUT SIMPLE AND WE HAVE SURE IT WILL WORK ON EVERY DB2 CONFIG
+      *    CHANGES TO ONE ROW SQL QUERIES FOR EVERY NAKSHATRA GIVES
+      *    MORE PERFORMANCE BUT MAY NOT WORK FOR ALL DATABASES VERSIONS
+      ******************************************************************
+      *    IMPLEMENTATION OF DB2 CONFIGURATION
+      *       WE IMPLY DB2 HAS VARIABLES: 
+      *       DATE, GENDER: 1 OR 0 FOR 1=MALE, 0=FAMALE
+      *       ALIVE STATUS: 1 OR 0 FOR 1=ALIVE, 0=DEAD   
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -86,6 +92,7 @@
         05 WS-QALIVE            PIC   9.
        01 WS-QDATE-LOWER-DB2    PIC   X(10).
        01 WS-QDATE-UPPER-DB2    PIC   X(10).
+       01 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
       **************
@@ -95,18 +102,85 @@
               SELECT CURRENT DATE FROM SYSIBM.SYSDUMMY1 
            END-EXEC.
       **************
-      *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
+      *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING - HEAVY LOAD
            EXEC SQL  
               DECLARE CRS1 CURSOR FOR  
               SELECT BDATE, GENDER, ALIVE 
       *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
               FROM CITIZENS 
-      **        WHERE BDATE >= DATE :WS-QDATE-LIMIT *> RM DATE?
-              WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
-              AND :WS-QDATE-UPPER-DB2 
-              FOR FETCH ONLY 
+              WHERE (YEAR(BDATE) 
+              BETWEEN YEAR(:WS-QDATE-LOWER-DB2)  
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2))  
+              FOR FETCH ONLY  
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
+      ******************************************************************
+      *ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
+      *27 NAKSHATRA WITH VARIATIONS OF QUERIES TODO 
+           EXEC SQL 
+              DECLARE CRS2001 CURSOR FOR 
+              SELECT COUNT(*) *> AS ALIVEMALE 
+      *        INTO :WS-QCOUNT 
+              FROM CITIZENS 
+              WHERE (ALIVE = 1) 
+              AND 
+              WHERE (GENDER = 1) 
+              AND 
+              WHERE (YEAR(BDATE) 
+              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2)) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      ******************************************************************
+           EXEC SQL 
+              DECLARE CRS2002 CURSOR FOR 
+              SELECT COUNT(*) *>AS ALIVEFEMALE 
+      *        INTO :WS-QCOUNT 
+              FROM CITIZENS 
+              WHERE (ALIVE = 1) 
+              AND 
+              WHERE (GENDER = 0) 
+              AND 
+              WHERE (YEAR(BDATE) 
+              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      ******************************************************************        
+           EXEC SQL 
+              DECLARE CRS2003 CURSOR FOR 
+              SELECT COUNT(*) *>AS DEADMALE 
+      *        INTO :WS-QCOUNT 
+              FROM CITIZENS 
+              WHERE (ALIVE = 0) 
+              AND 
+              WHERE (GENDER = 1) 
+              AND 
+              WHERE (YEAR(BDATE) 
+              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      ******************************************************************        
+           EXEC SQL 
+              DECLARE CRS2004 CURSOR FOR 
+              SELECT COUNT(*) *>AS DEADFEMALE 
+      *        INTO :WS-QCOUNT 
+              FROM CITIZENS 
+              WHERE (ALIVE = 0) 
+              AND 
+              WHERE (GENDER = 0) 
+              AND 
+              WHERE (YEAR(BDATE) 
+              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      ******************************************************************
+
+
       ******************************************************************
       *  END OF SQL VARIABLES & STRUCTURES
       ****************************************************************** 
@@ -249,18 +323,20 @@
            EVALUATE SQLCODE 
               WHEN ZERO 
       *****************************************
-           IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
-              *> YYYY/MM/DD
-              DISPLAY 'TEST'
-           ELSE 
-              IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
-                 *> MM/DD/YYYY
-                 DISPLAY 'TESY'
-              ELSE
-                 *> MM/DD/YYY
-                 DISPLAY 'TEST'
-              END-IF
-           END-IF
+      *THIS PART OF CODE IS NOT NEEDED
+      * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
+      *     IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
+      *        *> YYYY/MM/DD
+      *        DISPLAY 'TEST'
+      *     ELSE 
+      *        IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
+      *           *> MM/DD/YYYY
+      *           DISPLAY 'TESY'
+      *        ELSE
+      *           *> MM/DD/YYY
+      *           DISPLAY 'TEST'
+      *        END-IF
+      *     END-IF
       * END CHECKING DB2 DATE FORMAT  
       ******************************************               
               WHEN OTHER
@@ -292,10 +368,10 @@
            INTO 
               :WS-QBDATE, 
               :WS-QGENDER, 
-              :WS-QALIVE,
+              :WS-QALIVE
            FROM CITIZENS 
-            WHERE BDATE BETWEEN :WS-QDATE-LOWER-DB2 
-           AND :WS-QDATE-UPPER-DB2 
+           WHERE (YEAR(BDATE) BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
+           AND YEAR(:WS-QDATE-UPPER-DB2)) 
            END-EXEC 
 
            
