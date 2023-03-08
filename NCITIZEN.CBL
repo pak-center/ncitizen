@@ -222,15 +222,16 @@
          10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
       ******************************************************************        
       * THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
-       01 WS-INPUT.
-         05 WS-ARGS.
-           15 WS-MODE                 PIC   A. *> 'Q' OR 'D'
-           15 WS-SEPARATOR            PIC   X VALUE ','.
-           15 WS-INTERVAL-VAL         PIC   9(3).
-           88 PASS VALUES ARE 01 THRU 120.
-         05 WS-PGM-MODE               PIC   AA.
+       01 WS-PGM-INPUT.
+         05 WS-PGM-ARGS.
+           15 WS-PGM-MODE                 PIC   AA. *> 'SQ','MQ' OR 'DS'
+           15 WS-PGM-SEPARATOR            PIC   X VALUE ','.
+           15 WS-PGM-INTERVAL-VAL         PIC   S9(3).
+           88 WS-PGM-PASS VALUES ARE 01 THRU 120.
+         05 WS-PGM-RESULT                 PIC   S9(3).
+         05 WS-PGM-REMINDER               PIC   S9(3).
+      *   05 WS-PGM-MODE               PIC   AA.
       *******************************************
-         05 WS-ADATE                  PIC   X(8).
          05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
       *********   
@@ -271,26 +272,36 @@
               MOVE 10 TO RECV01-INTERVAL-VAL
               MOVE 1 TO RETURN-CODE
            ELSE
-           MOVE PARM-DATA(1:3) TO RECV01-INTERVAL-VAL
-           IF NOT PASS THEN
+  
+           IF NOT WS-PGM-PASS THEN
               DISPLAY 
               'WARNING: JCL PARM RANGE IS WRONG. TRY 001 TO 120 ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
               MOVE 10 TO RECV01-INTERVAL-VAL
               MOVE 2 TO RETURN-CODE
            ELSE
-              ACCEPT WS-ADATE       FROM DATE YYYYMMDD
-              ACCEPT RECV01-USER    FROM USERNAME
+              ACCEPT RECV01-PGM-START-DATE FROM DATE YYYYMMDD
+              ACCEPT RECV01-USER           FROM USERNAME
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
-      D    DISPLAY 'DEBUG: ', RECV01-USER, WS-ADATE,
+      D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
       D             'USER, CURRENT DATE'
+      ********************************
+      *    VERIFY RECV01-INTERVAL-VAL
+           MOVE PARM-DATA(4:3) TO WS-PGM-INTERVAL-VAL
       *************************************************
-      *  CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
-      *    DIVIDE 120 BY INTERVAL-VAL     
+      *    CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
+      *    DIVIDE 120 BY INTERVAL-VAL  
+      *    CHECKING OF CORRECTIVNESS FOR DIVIDE
+           PERFORM UNTIL WS-PGM-REMINDER = 0
+           DIVIDE 120 BY WS-PGM-INTERVAL-VAL 
+           GIVING WS-PGM-RESULT REMAINDER WS-PGM-REMINDER
+           IF WS-PGM-REMINDER IS NOT ZERO THEN
+              COMPUTE WS-PGM-INTERVAL-VAL = WS-PGM-INTERVAL-VAL + 1
+           END-IF
+           END-PERFORM
+           MOVE WS-PGM-INTERVAL-VAL TO RECV01-INTERVAL-VAL *>4SQL Q
+           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB
            
-           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT
-           *>IMPL CHECKING OF CORRECTIVNESS
-           *>MAYBE CHECKING REMAINDER? AND -1 TO MOD 0 ?
       ******************************************************************
            SET I TO 1 *> INITIALIZE INDEX
            EVALUATE WS-PGM-MODE
@@ -300,6 +311,7 @@
               PERFORM PARA-CREATE-VIEW
               PERFORM PARA-WRITE-TO-DATASET
            WHEN 'MQ' *> FASTER & EFFCIENT SQL (MULTI) QUERIES
+                     *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
               PERFORM PARA-SQL-MQ
               PERFORM PARA-ANALYSE-DATA
               PERFORM PARA-CREATE-VIEW
@@ -414,6 +426,15 @@
             FROM RECV01-INTERVAL-COUNT BY RECV01-INTERVAL-COUNT
             UNTIL WS-SQL-MQ-I > 120
               *>TODO
+      ******************************************************************
+      *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS
+      *    TOTAL CITIZENS COUNT
+
+
+      ******************************************************************
+           
+
+
            END-PERFORM 
            EXIT.
       ******************************************************************
