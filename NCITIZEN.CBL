@@ -33,7 +33,8 @@
       ******************************************************************
       *    ARGUMENTS FROM JCL TO PRINT STATISTICS FOR
       *    THE LAST 120 YEARS WITH 10 YEARS INTERVALS AS DEFAULT
-      *    FIRST PARM IS Q OR D. Q=SQL, D=DATASET LIKE PARM='Q,120'
+      *    FIRST PARM IS SQ,MQ OR DS. LIKE _Q=SQL, DS=DATASET 
+      *    LIKE PARM='MQ,120' OR 'DS,030'
       *    THIS FEATURE NEEDS IMPLEMENTATION - ARG PART, ADD FD FOR READ 
       ******************************************************************
       *    JCL PARM='010' EQ 12 TABLES FOR EVERY 10 YEARS FROM 120
@@ -190,7 +191,9 @@
          10 FILLER                 PIC   X(76).
          10 RECV01-CRC             PIC   A(30) VALUE 
                                    'AUTHOR: PRZEMYSLAW ADAM KUPISZ'.
-         10 RECV01-HLINE           PIC   X(40) VALUES ALL '*'.
+         10 RECV01-HLINE           PIC   X(80) VALUES ALL '*'.
+         10 RECV01-PGM.
+          15 RECV01-PGM-START-DATE PIC   99(4)/99/99.
          10 FILLER                 PIC   X(40) VALUES ALL '@'.
       *
          10 RECV01-USER            PIC   X(8).
@@ -225,6 +228,7 @@
            15 WS-SEPARATOR            PIC   X VALUE ','.
            15 WS-INTERVAL-VAL         PIC   9(3).
            88 PASS VALUES ARE 01 THRU 120.
+         05 WS-PGM-MODE               PIC   AA.
       *******************************************
          05 WS-ADATE                  PIC   X(8).
          05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
@@ -235,17 +239,17 @@
       *      15 WS-W-MONTH                  PIC   99.
       *      15 WS-W-DAY                    PIC   99.
       ******************************************************************
+      *    VARIABLES FOR PARA-SQL-MQ.
+      ******************************************************************
+       01 WS-SQL-MQ.
+        05 WS-SQL-MQ-I                PIC   S9(3).
+      ******************************************************************
       * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
         05 WS-MONTH-DAY      PIC   9(4).  
-
-      *  05 WS-CTAB. *> OCCURS 1 TO 10 TIMES DEP ON -OLD IDEA
-      *   10 WS-NTAB OCCURS 27 TIMES.
-      *    15 WS-N   PIC   9(9) COMP-5.
-      *    15 WS-U   PIC   9(9) COMP-5.
       ******************************************************************
-      * FOR ABEND CALL ROUTINE (SQL QUERY ERROR) 
+      * FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC   S9(9) BINARY.
        01  TIMING                     PIC   S9(9) BINARY.
       ******************************************************************
@@ -264,15 +268,15 @@
            IF NOT PARM-LENGTH > 0 THEN
               DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
-              MOVE 10 TO WS-INTERVAL-VAL
+              MOVE 10 TO RECV01-INTERVAL-VAL
               MOVE 1 TO RETURN-CODE
            ELSE
-           MOVE PARM-DATA(1:3) TO WS-INTERVAL-VAL
+           MOVE PARM-DATA(1:3) TO RECV01-INTERVAL-VAL
            IF NOT PASS THEN
               DISPLAY 
               'WARNING: JCL PARM RANGE IS WRONG. TRY 001 TO 120 ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
-              MOVE 10 TO WS-INTERVAL-VAL
+              MOVE 10 TO RECV01-INTERVAL-VAL
               MOVE 2 TO RETURN-CODE
            ELSE
               ACCEPT WS-ADATE       FROM DATE YYYYMMDD
@@ -289,12 +293,25 @@
            *>MAYBE CHECKING REMAINDER? AND -1 TO MOD 0 ?
       ******************************************************************
            SET I TO 1 *> INITIALIZE INDEX
-              PERFORM PARA-SQL-QUERIES 
-              *> CATCH STH IF ERR ?
+           EVALUATE WS-PGM-MODE
+           WHEN 'SQ' *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
+              PERFORM PARA-SQL-SQ 
               PERFORM PARA-ANALYSE-DATA
               PERFORM PARA-CREATE-VIEW
               PERFORM PARA-WRITE-TO-DATASET
-              
+           WHEN 'MQ' *> FASTER & EFFCIENT SQL (MULTI) QUERIES
+              PERFORM PARA-SQL-MQ
+              PERFORM PARA-ANALYSE-DATA
+              PERFORM PARA-CREATE-VIEW
+              PERFORM PARA-WRITE-TO-DATASET
+           WHEN 'DS'
+              PERFORM PARA-READ-FROM-DATASET
+              PERFORM PARA-CREATE-VIEW
+           WHEN OTHER
+           DISPLAY 'PANIC: WRONG PARM IN JCL. IS=', WS-PGM-MODE
+           DISPLAY ' NOTHING TO DO... EXITS PGM'
+           END-EVALUATE
+                    
       *        MOVE 0 TO RETURN-CODE
            END-IF
            END-IF
@@ -303,7 +320,7 @@
       ******************************************************************
       * STOP RUN PGM
       ******************************************************************
-       PARA-SQL-QUERIES. 
+       PARA-SQL-SQ. 
            EXEC SQL
               OPEN CRS2 
            END-EXEC. 
@@ -389,6 +406,17 @@
               CLOSE CRS1
            END-EXEC.   
            EXIT.
+      ******************************************************************
+       PARA-SQL-MQ. *> EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
+      *     PERFORM  *> TODO
+           PERFORM
+            VARYING WS-SQL-MQ-I
+            FROM RECV01-INTERVAL-COUNT BY RECV01-INTERVAL-COUNT
+            UNTIL WS-SQL-MQ-I > 120
+              *>TODO
+           END-PERFORM 
+           EXIT.
+      ******************************************************************
        PARA-NAKSHATRA-COMPUTE.
       ****************************************************************** 
       *
