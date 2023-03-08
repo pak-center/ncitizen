@@ -123,14 +123,11 @@
               SELECT COUNT(*) *> AS ALIVEMALE 
       *        INTO :WS-QCOUNT 
               FROM CITIZENS 
-              WHERE (ALIVE = 1) 
-              AND 
-              WHERE (GENDER = 1) 
-              AND 
-              WHERE (YEAR(BDATE) 
+              WHERE ALIVE = 1 
+              AND GENDER = 1 
+              AND (YEAR(BDATE) 
               BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-              AND 
-              YEAR(:WS-QDATE-UPPER-DB2)) 
+              AND YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************
@@ -139,11 +136,9 @@
               SELECT COUNT(*) *>AS ALIVEFEMALE 
       *        INTO :WS-QCOUNT 
               FROM CITIZENS 
-              WHERE (ALIVE = 1) 
-              AND 
-              WHERE (GENDER = 0) 
-              AND 
-              WHERE (YEAR(BDATE) 
+              WHERE ALIVE = 1 
+              AND GENDER = 0 
+              AND (YEAR(BDATE) 
               BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
                AND YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
@@ -154,11 +149,9 @@
               SELECT COUNT(*) *>AS DEADMALE 
       *        INTO :WS-QCOUNT 
               FROM CITIZENS 
-              WHERE (ALIVE = 0) 
-              AND 
-              WHERE (GENDER = 1) 
-              AND 
-              WHERE (YEAR(BDATE) 
+              WHERE ALIVE = 0 
+              AND GENDER = 1 
+              AND (YEAR(BDATE) 
               BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
                AND YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
@@ -169,11 +162,9 @@
               SELECT COUNT(*) *>AS DEADFEMALE 
       *        INTO :WS-QCOUNT 
               FROM CITIZENS 
-              WHERE (ALIVE = 0) 
-              AND 
-              WHERE (GENDER = 0) 
-              AND 
-              WHERE (YEAR(BDATE) 
+              WHERE ALIVE = 0 
+              AND GENDER = 0 
+              AND (YEAR(BDATE) 
               BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
                AND YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
