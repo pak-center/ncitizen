@@ -103,7 +103,8 @@
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
               DECLARE CRS2 CURSOR FOR 
-              SELECT CURRENT DATE + :WS-QDATE-TMP YEARS 
+              SELECT 
+              CURRENT DATE + :WS-QDATE-TMP YEARS 
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
@@ -111,8 +112,10 @@
       *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING - HEAVY LOAD
            EXEC SQL  
               DECLARE CRS1 CURSOR FOR  
-              SELECT BDATE, GENDER, ALIVE 
-      *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
+              SELECT 
+              BDATE, 
+              GENDER, 
+              ALIVE 
               FROM CITIZENS 
               WHERE BDATE 
               BETWEEN DATE(:WS-QDATE-LOWER-DB2) 
@@ -129,8 +132,8 @@
       *    4 SQL SQUERIES FOR TOTAL STATS SECTION 
            EXEC SQL 
               DECLARE CRS2001 CURSOR FOR 
-              SELECT COUNT(*) *> AS ALIVEMALE 
-      *        INTO :WS-QCOUNT 
+              SELECT 
+              COUNT(*) *> AS ALIVEMALE 
               FROM CITIZENS 
               WHERE ALIVE = 1 
               AND GENDER = 1 
@@ -142,8 +145,8 @@
       ******************************************************************
            EXEC SQL 
               DECLARE CRS2002 CURSOR FOR 
-              SELECT COUNT(*) *>AS ALIVEFEMALE 
-      *        INTO :WS-QCOUNT 
+              SELECT 
+              COUNT(*) *>AS ALIVEFEMALE 
               FROM CITIZENS 
               WHERE ALIVE = 1 
               AND GENDER = 0 
@@ -155,8 +158,8 @@
       ******************************************************************        
            EXEC SQL 
               DECLARE CRS2003 CURSOR FOR 
-              SELECT COUNT(*) *>AS DEADMALE 
-      *        INTO :WS-QCOUNT 
+              SELECT 
+              COUNT(*) *>AS DEADMALE 
               FROM CITIZENS 
               WHERE ALIVE = 0 
               AND GENDER = 1 
@@ -168,8 +171,8 @@
       ******************************************************************        
            EXEC SQL 
               DECLARE CRS2004 CURSOR FOR 
-              SELECT COUNT(*) *>AS DEADFEMALE 
-      *        INTO :WS-QCOUNT 
+              SELECT 
+              COUNT(*) *>AS DEADFEMALE
               FROM CITIZENS 
               WHERE ALIVE = 0 
               AND GENDER = 0 
@@ -416,10 +419,6 @@
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL
            FETCH CRS1 
-            INTO 
-           SELECT BDATE, 
-           GENDER, 
-           ALIVE 
            INTO 
               :WS-QBDATE, 
               :WS-QGENDER, 
