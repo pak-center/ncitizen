@@ -342,14 +342,18 @@
       *    PARAGRAPH SQL DATE DB2
       ******************************************************************
        PARA-SQL-DATE-DB2.
+
            EXEC SQL
               OPEN CRS2 
            END-EXEC.  
 
+
+
+
       * FETCH QUERY
            EXEC SQL
               FETCH CRS2 
-              INTO  WS-QDATE-CURRENT-DB2 *>TODO TABLE J 1,2
+              INTO  :WS-QDATE-CURRENT-DB2 *>TODO TABLE J 1,2
            END-EXEC 
 
            EVALUATE SQLCODE 
@@ -377,8 +381,8 @@
            DISPLAY '*************************************************'
            DISPLAY '**** E R R O R M E S S A G E S ****'
            DISPLAY '*************************************************'
-           DISPLAY '* Problem in paragraph: ' ws-paragraph
-           DISPLAY '* Problem-msg: ' ws-error-msg
+           DISPLAY '* Problem in paragraph: ' *>ws-paragraph
+           DISPLAY '* Problem-msg: ' *>ws-error-msg
            DISPLAY '*'
            DISPLAY '* SQLCODE: ' SQLCODE
            DISPLAY '*************************************************'
@@ -435,8 +439,8 @@
            DISPLAY '*************************************************'
            DISPLAY '**** E R R O R M E S S A G E S ****'
            DISPLAY '*************************************************'
-           DISPLAY '* Problem in paragraph: ' ws-paragraph
-           DISPLAY '* Problem-msg: ' ws-error-msg
+           DISPLAY '* Problem in paragraph: ' *>ws-paragraph
+           DISPLAY '* Problem-msg: ' *>ws-error-msg
            DISPLAY '*'
            DISPLAY '* SQLCODE: ' SQLCODE
            DISPLAY '*************************************************'
@@ -635,7 +639,7 @@
            DISPLAY 'NCITIZEN - (VEDIC ASTROLOGY) NAKSHATRA CITIZEN',
            ' SOFTWARE'
            DISPLAY 'SUBMITTED FOR USER: ', RECV01-USER,
-           ' AT ', RECV01-CURRENT-DATE
+           ' AT ', RECV01-PGM-START-DATE
            DISPLAY 'INTERVAL SET TO: ', RECV01-INTERVAL-VAL
            DISPLAY RECV01-HLINE
       ******************************************************************
