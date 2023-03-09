@@ -114,10 +114,11 @@
               SELECT BDATE, GENDER, ALIVE 
       *       INTO :WS-QBDATE, :WS-QGENDER, :WS-QALIVE
               FROM CITIZENS 
-              WHERE (YEAR(BDATE) 
-              BETWEEN YEAR(:WS-QDATE-LOWER-DB2)  
-              AND 
-              YEAR(:WS-QDATE-UPPER-DB2))  
+              WHERE BDATE 
+              BETWEEN DATE(:WS-QDATE-LOWER-DB2) 
+              - :WS-QINTERVAL YEARS 
+              AND DATE(:WS-QDATE-UPPER-DB2) 
+              - :WS-QINTERVAL YEARS 
               FOR FETCH ONLY  
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
@@ -414,26 +415,17 @@
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL
+           FETCH CRS1 
+            INTO 
            SELECT BDATE, 
-                  GENDER, 
-                  ALIVE 
+           GENDER, 
+           ALIVE 
            INTO 
               :WS-QBDATE, 
               :WS-QGENDER, 
               :WS-QALIVE 
-           FROM CITIZENS 
-      *     WHERE (YEAR(BDATE) 
-           WHERE BDATE
-           BETWEEN DATE(:WS-QDATE-LOWER-DB2) 
-            - :WS-QINTERVAL YEARS 
-           AND DATE(:WS-QDATE-UPPER-DB2) 
-            - :WS-QINTERVAL YEARS 
-           *> MAYBE ONE MORE SLECT TO EXTRACK NEW DATES ? TODO 
-      *     WHERE (YEAR(BDATE) BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-      *     AND YEAR(:WS-QDATE-UPPER-DB2)) 
             END-EXEC 
 
-           
            IF (SQLCODE NOT = 0 AND 100) THEN
       ************** DB2 Error Handling Routine
            DISPLAY '*************************************************'
