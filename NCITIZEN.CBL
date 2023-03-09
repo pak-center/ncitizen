@@ -95,8 +95,8 @@
            OCCURS 2 TIMES INDEXED BY INDEX-QDATE. 
        01 WS-QDATE-LOWER-DB2    PIC   X(10).
        01 WS-QDATE-UPPER-DB2    PIC   X(10).
-       01 WS-QINTERVAL          PIC   S9(4) COMP-5 .
-       01 WS-QDATE-TMP          PIC   S9(4) COMP-5 VALUES ZEROES.
+       01 WS-QINTERVAL          PIC   S9(3) COMP-5 .
+       01 WS-QDATE-TMP          PIC   S9(3) COMP-5 VALUES ZEROES.
        01 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
@@ -105,7 +105,8 @@
            EXEC SQL  
               DECLARE CRS2 CURSOR FOR 
               SELECT 
-              CURRENT DATE + :WS-QDATE-TMP YEARS 
+              YEAR(CURRENT DATE + :WS-QDATE-TMP YEARS) 
+      *        YEAR(CURRENT DATE)
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
@@ -118,11 +119,11 @@
               GENDER, 
               ALIVE 
               FROM CITIZENS 
-              WHERE BDATE 
+              WHERE YEAR(BDATE) 
               BETWEEN 
-              DATE(:WS-QDATE-LOWER-DB2) - :WS-QINTERVAL YEARS 
+              :WS-QDATE-LOWER-DB2 - :WS-QINTERVAL *>YEARS 
               AND 
-              DATE(:WS-QDATE-UPPER-DB2) - :WS-QINTERVAL YEARS 
+              :WS-QDATE-UPPER-DB2 - :WS-QINTERVAL 
               FOR FETCH ONLY  
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
@@ -353,17 +354,17 @@
       ******************************************************************
       *    PARAGRAPH SQL DATE DB2
       ******************************************************************
-       PARA-SQL-DATE-DB2.
+       PARA-SQL-DATE-DB2. 
 
            EXEC SQL
               OPEN CRS2 
            END-EXEC.  
            
-           SET INDEX-QDATE TO 1
-           PERFORM 2 TIMES
-      * FETCH QUERY
-           EXEC SQL 
-              FETCH CRS2 INTO 
+           SET INDEX-QDATE TO 1 
+           PERFORM 2 TIMES 
+      * FETCH QUERY 
+           EXEC SQL
+           FETCH CRS2 INTO 
               :WS-QDATE-CURRENT-DB2(INDEX-QDATE) 
            END-EXEC 
 
