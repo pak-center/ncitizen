@@ -89,13 +89,14 @@
            END-EXEC.
        01 WS-QREC01.
         05 WS-QBDATE            PIC   X(10).
-        05 WS-QGENDER           PIC   9.
-        05 WS-QALIVE            PIC   9.
-       01 WS-QDATE-CURRENT-DB2  PIC   X(10). *>ADD OCCURS 2 TIMES TODO
+        05 WS-QGENDER           PIC   9. *> CHANGE TO X'F' OR X'M'
+        05 WS-QALIVE            PIC   9. *> CHNGE TO X'A' OR 'D'
+       01 WS-QDATE-CURRENT-DB2  PIC   X(10) 
+           OCCURS 2 TIMES INDEXED BY INDEX-QDATE. 
        01 WS-QDATE-LOWER-DB2    PIC   X(10).
        01 WS-QDATE-UPPER-DB2    PIC   X(10).
-       01 WS-QINTERVAL          PIC   S9(3).
-       01 WS-QDATE-TMP          PIC   S9(3) VALUES ZEROES.
+       01 WS-QINTERVAL          PIC   S9(4) COMP-5 .
+       01 WS-QDATE-TMP          PIC   S9(4) COMP-5 VALUES ZEROES.
        01 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
@@ -118,10 +119,10 @@
               ALIVE 
               FROM CITIZENS 
               WHERE BDATE 
-              BETWEEN DATE(:WS-QDATE-LOWER-DB2) 
-              - :WS-QINTERVAL YEARS 
-              AND DATE(:WS-QDATE-UPPER-DB2) 
-              - :WS-QINTERVAL YEARS 
+              BETWEEN 
+              DATE(:WS-QDATE-LOWER-DB2) - :WS-QINTERVAL YEARS 
+              AND 
+              DATE(:WS-QDATE-UPPER-DB2) - :WS-QINTERVAL YEARS 
               FOR FETCH ONLY  
               *> CHECK DATE STANDARD FIRST TO IMPL
            END-EXEC.  
@@ -138,8 +139,10 @@
               WHERE ALIVE = 1 
               AND GENDER = 1 
               AND (YEAR(BDATE) 
-              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-              AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              BETWEEN 
+              YEAR(:WS-QDATE-LOWER-DB2) 
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************
@@ -151,8 +154,10 @@
               WHERE ALIVE = 1 
               AND GENDER = 0 
               AND (YEAR(BDATE) 
-              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              BETWEEN 
+              YEAR(:WS-QDATE-LOWER-DB2) 
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2))  
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************        
@@ -164,8 +169,10 @@
               WHERE ALIVE = 0 
               AND GENDER = 1 
               AND (YEAR(BDATE) 
-              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              BETWEEN 
+              YEAR(:WS-QDATE-LOWER-DB2) 
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************        
@@ -177,8 +184,10 @@
               WHERE ALIVE = 0 
               AND GENDER = 0 
               AND (YEAR(BDATE) 
-              BETWEEN YEAR(:WS-QDATE-LOWER-DB2) 
-               AND YEAR(:WS-QDATE-UPPER-DB2)) 
+              BETWEEN 
+              YEAR(:WS-QDATE-LOWER-DB2) 
+              AND 
+              YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************
@@ -310,7 +319,6 @@
            DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB
            
       ******************************************************************
-           SET I TO 1 *> INITIALIZE INDEX
            EVALUATE WS-PGM-MODE
            WHEN 'SQ' *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
               PERFORM PARA-SQL-DATE-DB2 
@@ -350,19 +358,21 @@
            EXEC SQL
               OPEN CRS2 
            END-EXEC.  
-
-
-
-
+           
+           SET INDEX-QDATE TO 1
+           PERFORM 2 TIMES
       * FETCH QUERY
-           EXEC SQL
-              FETCH CRS2 
-              INTO  :WS-QDATE-CURRENT-DB2 *>TODO TABLE J 1,2
+           EXEC SQL 
+              FETCH CRS2 INTO 
+              :WS-QDATE-CURRENT-DB2(INDEX-QDATE) 
            END-EXEC 
 
            EVALUATE SQLCODE 
               WHEN ZERO 
-           MOVE WS-QDATE-CURRENT-DB2 TO RECV01-CURRENT-DATE-DB2             
+              *> TODO FIX MOVE BELOW
+           MOVE WS-QDATE-CURRENT-DB2(1) TO RECV01-CURRENT-DATE-DB2 
+           MOVE WS-QDATE-CURRENT-DB2(2) TO WS-QDATE-UPPER-DB2
+                       
       *****************************************
       *THIS PART OF CODE IS NOT NEEDED
       * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
@@ -392,7 +402,11 @@
            DISPLAY '*************************************************'
            CALL "CEE3ABD" USING ABEND-CODE , TIMING           
            END-EVALUATE
-     
+      *
+           MOVE RECV01-INTERVAL-VAL TO WS-QDATE-TMP
+           SET INDEX-QDATE UP BY 1
+           END-PERFORM
+
            EXEC SQL
               CLOSE CRS2
            END-EXEC.  
