@@ -59,16 +59,22 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL. 
-           SELECT RECLOG ASSIGN TO NCLOG
-           ORGANIZATION IS SEQUENTIAL
-           ACCESS MODE IS SEQUENTIAL
-           FILE STATUS IS LK-FS
-
+           SELECT RECLOGW ASSIGN TO NCLOGW 
+           ORGANIZATION IS SEQUENTIAL 
+           ACCESS MODE IS SEQUENTIAL 
+           FILE STATUS IS LK-FS-W.  
+      *
+           SELECT RECLOGR ASSIGN TO NCLOGR 
+           ORGANIZATION IS SEQUENTIAL 
+           ACCESS MODE IS SEQUENTIAL 
+           FILE STATUS IS LK-FS-R. 
        DATA DIVISION.
-       FILE SECTION.
-       FD RECLOG.
+       FILE SECTION. 
+           *>RECORDING MODE IS VB. 
+           *>DATA RECORD IS RECV01-DS.
+       FD RECLOGW. 
       ******************************************************************
-       01 RECV01-DS.
+       01 RECV01-DS. 
       ******************************************************************       
       * TODO: BINARY FORM OF DATA INSIDE THE STRUCTURE
       ******************************************************************
@@ -77,6 +83,9 @@
         05 RECV01-DS-SUMMARY.
 
       ******************************************************************      
+       FD RECLOGR. 
+       01 RECV01-DS-R. 
+
        WORKING-STORAGE SECTION.
       ******************************************************************
       *  BEGIN SQL VARIABLES & STRUCTURES
@@ -275,11 +284,12 @@
        01 PARM-BUFFER.
          05 PARM-LENGTH               PIC   S9(4) COMP.
          05 PARM-DATA                 PIC   X(256).
-       01 LK-FS                       PIC   99.
+       01 LK-FS-W. *>                    PIC   99.
+       01 LK-FS-R.
       ******************************************************************
       *    PROCEDURE DIVISION
       ******************************************************************
-       PROCEDURE DIVISION USING PARM-BUFFER, LK-FS.
+       PROCEDURE DIVISION USING PARM-BUFFER, LK-FS-W, LK-FS-R.
       ******************************************************************
       *  LEGACY ARGS CHECKING, NEEDS FIX FOR ONE MORE PARAM 
       *  E.G.  IS (120) MUST BE (D,1) OR (Q,120) 
@@ -717,8 +727,8 @@
            EXIT.
       ******************************************************************
        PARA-WRITE-TO-DATASET.
-           OPEN EXTEND RECLOG.  *> OUTPUT TO NOT ERASE EXISTING LOG
-           EVALUATE LK-FS       *> FILE STATUS
+           OPEN EXTEND RECLOGW.  *> OUTPUT TO NOT ERASE EXISTING LOG
+           EVALUATE LK-FS-W       *> FILE STATUS
               WHEN 35           *> CAN NOT OPEN DS
            DISPLAY 'WARNING: ',
            'PRINT ONLY TO SPOOL, DATASET CAN NOT BE OPEN'
@@ -729,8 +739,17 @@
            MOVE RECV01 TO RECV01-DS
            WRITE RECV01-DS
            END-WRITE.
-           CLOSE RECLOG.
+           CLOSE RECLOGW.
            EXIT.
       *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT TO SPOOL
-       PARA-READ-FROM-DATASET.
+       PARA-READ-FROM-DATASET. 
+           OPEN INPUT RECLOGR 
+           PERFORM UNTIL *> TODO VB RECORDS, NEED TO THINK ABOUT IT 
+           READ RECV01-DS-R 
+           END-READ 
+           MOVE RECV01-DS-R TO RECV01 
+           *>CHECK CRC TODO 
+           PERFORM PARA-CREATE-VIEW
+           END-PERFORM 
+           CLOSE RECLOGR
            EXIT.
