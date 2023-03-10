@@ -59,19 +59,17 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL. 
-           SELECT RECLOGW ASSIGN TO NCLOGW 
+           SELECT RECLOGW ASSIGN TO UT-S-NCLOGW 
            ORGANIZATION IS SEQUENTIAL 
            ACCESS MODE IS SEQUENTIAL 
            FILE STATUS IS LK-FS-W.  
       *
-           SELECT RECLOGR ASSIGN TO NCLOGR 
+           SELECT OPTIONAL RECLOGR ASSIGN TO UT-S-NCLOGR 
            ORGANIZATION IS SEQUENTIAL 
            ACCESS MODE IS SEQUENTIAL 
            FILE STATUS IS LK-FS-R. 
        DATA DIVISION.
        FILE SECTION. 
-           *>RECORDING MODE IS VB. 
-           *>DATA RECORD IS RECV01-DS.
        FD RECLOGW. 
       ******************************************************************
        01 RECV01-DS. 
@@ -83,12 +81,15 @@
         05 RECV01-DS-SUMMARY.
 
       ******************************************************************      
-       FD RECLOGR   
-       BLOCK CONTAINS 0 RECORDS 
+       FD RECLOGR    
+           BLOCK CONTAINS 0 RECORDS 
       *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
-       RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !!!!
-       DEPENDING ON RECV01-DS-R-LEN. *> TODO IN WS-
+           RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !!!!
+           DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
+           RECORDING MODE IS V *> VB? 
+           DATA RECORD IS RECV01-DS-R. 
+
        01 RECV01-DS-R. 
         05 RECV01-DS-R-HEADER.
         05 RECV01-DS--RTABLE-STATS.
@@ -283,6 +284,9 @@
       ******************************************************************
        01 WS-STATS.
         05 WS-MONTH-DAY      PIC   9(4).  
+      ******************************************************************
+      * FS
+       01 WS-EOF-FLAG        PIC   A.
       ******************************************************************
       * FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC   S9(9) BINARY.
@@ -752,12 +756,15 @@
       *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT TO SPOOL
        PARA-READ-FROM-DATASET. 
            OPEN INPUT RECLOGR 
-           PERFORM UNTIL *> TODO VB RECORDS, NEED TO THINK ABOUT IT 
-           READ RECV01-DS-R 
-           END-READ 
-           MOVE RECV01-DS-R TO RECV01 
+           PERFORM UNTIL WS-EOF-FLAG = 'Y' 
+           READ RECV01-DS-R INTO RECV01 
+           AT END 
+           MOVE 'Y' TO WS-EOF-FLAG 
+           NOT AT END 
+           MOVE RECV01-DS-R TO RECV01 *>CHANGE TO REC-LENGTH FOR V
            *>CHECK CRC TODO 
-           PERFORM PARA-CREATE-VIEW
+           PERFORM PARA-CREATE-VIEW           
+           END-READ 
            END-PERFORM 
-           CLOSE RECLOGR
-           EXIT.
+           CLOSE RECLOGR 
+           EXIT. 
