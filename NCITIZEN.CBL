@@ -83,9 +83,17 @@
         05 RECV01-DS-SUMMARY.
 
       ******************************************************************      
-       FD RECLOGR. 
+       FD RECLOGR   
+       BLOCK CONTAINS 0 RECORDS 
+      *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
+      *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
+       RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !!!!
+       DEPENDING ON RECV01-DS-R-LEN. *> TODO IN WS-
        01 RECV01-DS-R. 
-
+        05 RECV01-DS-R-HEADER.
+        05 RECV01-DS--RTABLE-STATS.
+        *> HERE MAY BE MORE RTABLE-STATS FROM 1- 120
+        05 RECV01-DS-R-SUMMARY.
        WORKING-STORAGE SECTION.
       ******************************************************************
       *  BEGIN SQL VARIABLES & STRUCTURES
