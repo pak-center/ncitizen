@@ -3,6 +3,7 @@
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
+* [Installation](#installation)
 * [Features](#features)
 * [TOO](#todo)
 * [License](#license)
@@ -15,6 +16,9 @@ Project is created with:
 * COBOL 
 * SQL 
 * JCL
+## Installation
+* Available z/OS COBOL compiler PTF
+* DB2 Database
 ## Features
 | Feature       | Status        |
 | ------------- | ------------- |
