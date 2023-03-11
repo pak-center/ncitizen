@@ -1,4 +1,7 @@
 # ncitizen
+![GitHub top language](https://img.shields.io/github/languages/top/pak-center/ncitizen?style=plastic)
+![Lines of code](https://img.shields.io/tokei/lines/github/pak-center/ncitizen?label=total%20lines%20of%20code&style=plastic)
+![GitHub](https://img.shields.io/github/license/pak-center/ncitizen?style=plastic)
 ## CODE STILL IN ALPHA DEVELOPMENT PHASE
 ## Table of contents
 * [General info](#general-info)
