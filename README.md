@@ -23,14 +23,14 @@ Project is created with:
 * Available z/OS COBOL compiler PTF
 * DB2 Database
 ## Features
-| Feature       | Status        |
-| ------------- | ------------- |
-| SLOW SQL SQ   | Completed     |
-| FAST SQL MQ   | In Progress   |
-| QSAM WRITE    | Completed     |
-| QSAM READ     | In Progress   |
-| PRINT STATS   | In Progress   |
-| H-BAR CHARTS  | In Progress   |
+| Feature       | % Progress | Status |
+| ------------- | ---        |------- |
+| SLOW SQL SQ   | ########## | Completed |
+| FAST SQL MQ   | ####       | In Progress |
+| QSAM WRITE    | ########## | Completed |
+| QSAM READ     | ########   | In Progress |
+| PRINT STATS   | ## | In Progress |
+| H-BAR CHARTS  | # | In Progress |
 ## TODO
 * optimaze SQL multi rows query for single row queries and move some PGM logic to SQL and advance queries for calculation on DB2 side (giving choice to user in JCL PARM: FAST adv sql queries or SLOW single simple query)
 * clean code related with records and variables
