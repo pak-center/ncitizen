@@ -35,13 +35,14 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | PRINT STATS   | ## | In Progress |
 | H-BAR CHARTS  | # | In Progress |
 ## Run the Project
-* JCL configuration to run (when 120 years is divided by interval value with the rest interval value is increased by 1 as it gives mod 0):
+* JCL configuration to run: 
+ - (when 120 years is divided by interval value with the rest interval value is increased by 1 as it gives mod 0)
 > MULTIPLE ROWS SQL QUERY FOR ALL NAKSHATRAS IS NOT EFFICIENT but SIMPLE and fast in implementation in code!
 > Default interval = 10
 ```jcl
 PARM='SQ'
 ```
-> For minimum interval = 1 year
+> For minimum interval = 1 year (PGM PRINTS 120 TABLE RAPORTS + SUMMARY)
 ```jcl
 PARM='SQ,1'
 ```
@@ -49,7 +50,7 @@ PARM='SQ,1'
 ```jcl
 PARM='MQ,120'
 ```
-> For maximum interval = 120 years
+> For maximum interval = 120 years (PGM PRINTS 1 TABLE RAPORT + SUMMARY)
 ```jcl
 PARM='MQ,120'
 ```
