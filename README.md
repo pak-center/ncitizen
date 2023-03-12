@@ -36,7 +36,6 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | H-BAR CHARTS  | # | In Progress |
 ## Run the Project
 * JCL configuration to run: 
- - (when 120 years is divided by interval value with the rest interval value is increased by 1 as it gives mod 0)
 > MULTIPLE ROWS SQL QUERY FOR ALL NAKSHATRAS IS NOT EFFICIENT but SIMPLE and fast in implementation in code!
 > Default interval = 10
 ```jcl
@@ -57,6 +56,10 @@ PARM='MQ,120'
 > READ QSAM DATASET with log data records from earlier PGM run and only PRINT TO SPOOL THE VIEW (no SQL queries)
 ```jcl
 PARM='DS'
+```
+> (when 120 years is divided by interval value with the rest, the interval is increased by 1 inside loop as it gives mod 0)
+```jcl
+PARM='MQ,73' inserted in JCL by the user is corrected to PARM='MQ,120' internally
 ```
 ## TODO
 * optimaze SQL multi rows query for single row queries and move some PGM logic to SQL and advance queries for calculation on DB2 side (giving choice to user in JCL PARM: FAST adv sql queries or SLOW single simple query)
