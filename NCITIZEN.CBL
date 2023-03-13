@@ -63,7 +63,7 @@
            ORGANIZATION IS SEQUENTIAL 
            ACCESS MODE IS SEQUENTIAL 
            FILE STATUS IS LK-FS-W.  
-      *
+      *    
            SELECT OPTIONAL RECLOGR ASSIGN TO NCLOGR 
            ORGANIZATION IS SEQUENTIAL 
            ACCESS MODE IS SEQUENTIAL 
@@ -87,7 +87,7 @@
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
            RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !!!!
            DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
-           RECORDING MODE IS V *> VB? 
+           RECORDING MODE IS V *> VB?
            DATA RECORD IS RECV01-DS-R. 
 
        01 RECV01-DS-R. 
@@ -103,7 +103,7 @@
            EXEC SQL  
               INCLUDE SQLCA  
            END-EXEC.
-      **************
+      ******************************************************************
            EXEC SQL BEGIN DECLARE SECTION
            END-EXEC.
        01 WS-QREC01.
@@ -119,7 +119,7 @@
         05 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
-      **************
+      ******************************************************************
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
               DECLARE CRS2 CURSOR FOR 
@@ -129,7 +129,7 @@
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
-      **************
+      ******************************************************************
       *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING - HEAVY LOAD
            EXEC SQL  
               DECLARE CRS1 CURSOR FOR  
@@ -237,8 +237,8 @@
          10 RECV01-CURRENT-DATE-DB2    PIC   X(10).           
          10 RECV01-INTERVAL-VAL    PIC   S9(3).  
          10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
-         
-         
+
+      ******************************************************************        
       * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
@@ -251,8 +251,9 @@
          15 RECV01-NTAB OCCURS 27 TIMES.
           20 WS-N                  PIC   9(9) COMP-5.
           20 WS-U                  PIC   9(9) COMP-5.
-        05 RECV01-SUMMARY.
-         
+      
+      ******************************************************************
+        05 RECV01-SUMMARY.   
          10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
          10 RECV01-S-TALIVE-CP     PIC   9(9) COMP-5.
          10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
@@ -267,10 +268,10 @@
            88 WS-PGM-PASS VALUES ARE 01 THRU 120.
          05 WS-PGM-RESULT                 PIC   S9(3).
          05 WS-PGM-REMINDER               PIC   S9(3).
-      *******************************************
+      ******************************************************************
          05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
-      *********   
+      ******************************************************************   
       *     10 WS-W-DATE                PIC   X(10).
       *      15 WS-W-YEAR                   PIC   9(4).
       *      15 WS-W-MONTH                  PIC   99.
@@ -306,6 +307,7 @@
       ******************************************************************
       *  LEGACY ARGS CHECKING, NEEDS FIX FOR ONE MORE PARAM 
       *  E.G.  IS (120) MUST BE (D,1) OR (Q,120) 
+      ******************************************************************
            IF NOT PARM-LENGTH > 0 THEN
               DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
@@ -325,13 +327,15 @@
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
       D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
       D             'USER, CURRENT DATE'
-      ********************************
+      ******************************************************************
       *    VERIFY RECV01-INTERVAL-VAL
+      ******************************************************************
            MOVE PARM-DATA(4:3) TO WS-PGM-INTERVAL-VAL
-      *************************************************
+      ******************************************************************
       *    CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
       *    DIVIDE 120 BY INTERVAL-VAL  
       *    CHECKING OF CORRECTIVNESS FOR DIVIDE
+      ******************************************************************
            PERFORM UNTIL WS-PGM-REMINDER = 0
            DIVIDE 120 BY WS-PGM-INTERVAL-VAL 
            GIVING WS-PGM-RESULT REMAINDER WS-PGM-REMINDER
@@ -340,8 +344,7 @@
            END-IF
            END-PERFORM
            MOVE WS-PGM-INTERVAL-VAL TO RECV01-INTERVAL-VAL *>4SQL Q
-           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB
-           
+           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB         
       ******************************************************************
            EVALUATE WS-PGM-MODE
            WHEN 'SQ' *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
@@ -397,7 +400,7 @@
            MOVE WS-QDATE-CURRENT-DB2(1) TO RECV01-CURRENT-DATE-DB2 
            MOVE WS-QDATE-CURRENT-DB2(2) TO WS-QDATE-UPPER-DB2
                        
-      *****************************************
+      ******************************************************************
       *THIS PART OF CODE IS NOT NEEDED
       * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
       *     IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
@@ -413,7 +416,7 @@
       *        END-IF
       *     END-IF
       * END CHECKING DB2 DATE FORMAT  
-      ******************************************               
+      ******************************************************************        
               WHEN OTHER
       ************** DB2 Error Handling Routine
            DISPLAY '*************************************************'
@@ -452,7 +455,7 @@
            *> AS ANOTHER QUERY NEXT TO CURRENT DATE + INTERV. YEARS
            MOVE RECV01-CURRENT-DATE-DB2 TO WS-QDATE-LOWER-DB2
            PERFORM RECV01-INTERVAL-COUNT TIMES 
-      ************************************************
+      ******************************************************************
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL
@@ -475,11 +478,13 @@
            DISPLAY '*************************************************'
            CALL "CEE3ABD" USING ABEND-CODE , TIMING
            END-IF 
+      ******************************************************************
       * COMPUTES NAKSHATRA 
+      ******************************************************************
            PERFORM PARA-NAKSHATRA-COMPUTE
            END-PERFORM
 
-      **************************************************                
+      ******************************************************************        
            ADD RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL
            MOVE WS-PGM-INTERVAL-VAL TO WS-QINTERVAL
            SET I UP BY 1 
@@ -491,6 +496,7 @@
            EXIT.
       ******************************************************************
        PARA-SQL-MQ. *> EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
+      ******************************************************************
       *     PERFORM  *> TODO
            PERFORM
             VARYING WS-SQL-MQ-I
@@ -518,7 +524,7 @@
               *> WS-QALIVE
       *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
-
+      ******************************************************************
            EVALUATE WS-QALIVE
               WHEN 1
            EVALUATE WS-QGENDER
@@ -535,7 +541,7 @@
               COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1
            END-EVALUATE       
            END-EVALUATE
-              
+     
            EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE TODO
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
@@ -656,8 +662,10 @@
 
            
            EXIT.
+      ******************************************************************     
        PARA-ANALYSE-DATA.
            EXIT.
+      ******************************************************************     
        PARA-CREATE-VIEW.       
       ******************************************************************
       *    WELCOME SCREEN MSG
@@ -675,21 +683,23 @@
       *    TABLE STATISTICS AND % VIEW
       ****************************************************************** 
       *LOOP FOR TABLES PRINT
+      ******************************************************************
            PERFORM RECV01-INTERVAL-COUNT TIMES 
            DISPLAY RECV01-HLINE 
            DISPLAY 'TABLE ', WS-TAB-COUNTER,
            ' FROM ',RECV01-INTERVAL-COUNT
            DISPLAY RECV01-HLINE 
            COMPUTE WS-TAB-COUNTER = WS-TAB-COUNTER + 1
+      ******************************************************************     
       *PART FOR SUMMARY
-      ***
+      ******************************************************************
            ADD RECV01-FEMALE(1) RECV01-MALE(1) *> ALIVE
                RECV01-FEMALE(2) RECV01-MALE(2) *> DEAD
            TO RECV01-S-TOTAL-CP
            ON SIZE ERROR DISPLAY 'PANIC: ',
            'PIC CLAUSE RECV01-S-TOTAL-CP ',
            'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
-      ***
+      ******************************************************************
            SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
            FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
            DISPLAY RECV01-HLINE
@@ -754,6 +764,7 @@
            END-WRITE.
            CLOSE RECLOGW.
            EXIT.
+      ******************************************************************     
       *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT TO SPOOL
        PARA-READ-FROM-DATASET. 
            OPEN INPUT RECLOGR 
