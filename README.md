@@ -51,6 +51,7 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | QSAM READ     | ########   | In Progress |
 | PRINT STATS   | ## | In Progress |
 | H-BAR CHARTS  | # | In Progress |
+| Beautify code | # | In Progress |
 ## Run the Project
 * JCL configuration to run: 
 > MULTIPLE ROWS SQL QUERY FOR ALL NAKSHATRAS IS NOT EFFICIENT but SIMPLE and fast in implementation in code!
