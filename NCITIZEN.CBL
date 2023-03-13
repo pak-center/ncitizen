@@ -109,13 +109,13 @@
         05 WS-QBDATE            PIC   X(10).
         05 WS-QGENDER           PIC   9. *> CHANGE TO X'F' OR X'M'
         05 WS-QALIVE            PIC   9. *> CHNGE TO X'A' OR 'D'
-       01 WS-QDATE-CURRENT-DB2  PIC   X(10) 
+        05 WS-QDATE-CURRENT-DB2  PIC   X(10) 
            OCCURS 2 TIMES INDEXED BY INDEX-QDATE. 
-       01 WS-QDATE-LOWER-DB2    PIC   X(10).
-       01 WS-QDATE-UPPER-DB2    PIC   X(10).
-       01 WS-QINTERVAL          PIC   S9(3) COMP-5 .
-       01 WS-QDATE-TMP          PIC   S9(3) COMP-5 VALUES ZEROES.
-       01 WS-QCOUNT             PIC   9(9) COMP-5.
+        05 WS-QDATE-LOWER-DB2    PIC   X(10).
+        05 WS-QDATE-UPPER-DB2    PIC   X(10).
+        05 WS-QINTERVAL          PIC   S9(3) COMP-5 .
+        05 WS-QDATE-TMP          PIC   S9(3) COMP-5 VALUES ZEROES.
+        05 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
            END-EXEC.
       **************
