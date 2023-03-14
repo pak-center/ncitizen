@@ -1,6 +1,9 @@
 # ncitizen
 ![GitHub top language](https://img.shields.io/github/languages/top/pak-center/ncitizen?style=plastic)
-![Lines of code](https://img.shields.io/tokei/lines/github/pak-center/ncitizen?label=total%20lines%20of%20code&style=plastic)
+[![Scc Count Badge](https://sloc.xyz/github/pak-center/ncitizen/)](https://github.com/pak-center/ncitizen/)
+[![Scc Count Badge](https://sloc.xyz/github/pak-center/ncitizen/?category=code)](https://github.com/pak-center/ncitizen/)
+[![Scc Count Badge](https://sloc.xyz/github/pak-center/ncitizen/?category=comments)](https://github.com/pak-center/ncitizen/)
+[![Scc Count Badge](https://sloc.xyz/github/pak-center/ncitizen/?category=blanks)](https://github.com/pak-center/ncitizen/)
 ![GitHub repo size](https://img.shields.io/github/repo-size/pak-center/ncitizen?style=plastic)
 ![GitHub](https://img.shields.io/github/license/pak-center/ncitizen?style=plastic)
 ## CODE STILL IN ALPHA DEVELOPMENT PHASE
@@ -88,3 +91,7 @@ PARM='MQ,73' inserted in JCL by the user is corrected to PARM='MQ,120' internall
 * create sample JCL for SUB
 ## License
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+<!-- 
+[Lines of code](https://img.shields.io/tokei/lines/github/pak-center/ncitizen?label=total%20lines%20of%20code&style=plastic)
+--> 
+
