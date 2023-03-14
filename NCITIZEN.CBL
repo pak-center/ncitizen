@@ -70,7 +70,15 @@
            FILE STATUS IS LK-FS-R. 
        DATA DIVISION.
        FILE SECTION. 
-       FD RECLOGW. 
+       FD RECLOGW
+           BLOCK CONTAINS 0 RECORDS *>TODO AFTER IMPL. OF RECORDS 
+      *    TODO:
+      *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
+      *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
+           RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !
+           DEPENDING ON RECV01-DS-LEN *> TODO IN WS-
+           RECORDING MODE IS V 
+           DATA RECORD IS RECV01-DS.
       ******************************************************************
        01 RECV01-DS. 
       ******************************************************************       
@@ -83,15 +91,15 @@
 
       ******************************************************************      
        FD RECLOGR    
-           BLOCK CONTAINS 0 RECORDS 
+           BLOCK CONTAINS 0 RECORDS *>TODO AFTER IMPL. OF RECORDS 
       *    TODO:
       *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
            RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !
            DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
-           RECORDING MODE IS V *> VB?
+           RECORDING MODE IS V 
            DATA RECORD IS RECV01-DS-R. 
-
+      *-----------------------------------------------------------------
        01 RECV01-DS-R. 
         05 RECV01-DS-R-HEADER.
          07 RECV01-DS-R-LEN. *>TODO
@@ -126,7 +134,7 @@
            EXEC SQL END DECLARE SECTION
            END-EXEC. 
       ******************************************************************
-      *HELP QUERY TO DETECT DB2 DATE FORMAT
+      *SUPPORT QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
               DECLARE CRS2 CURSOR FOR 
               SELECT 
@@ -136,7 +144,9 @@
               FOR FETCH ONLY
            END-EXEC.
       ******************************************************************
-      *MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING - HEAVY LOAD
+      *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
+      *         WORST PERFORMANCE AND HEAVY LOAD   
+      ******************************************************************
            EXEC SQL  
               DECLARE CRS1 CURSOR FOR  
               SELECT 
@@ -149,14 +159,16 @@
               :WS-QDATE-LOWER-DB2 - :WS-QINTERVAL *>YEARS 
               AND 
               :WS-QDATE-UPPER-DB2 - :WS-QINTERVAL 
-              FOR FETCH ONLY  
-              *> CHECK DATE STANDARD FIRST TO IMPL
+              FOR FETCH ONLY 
            END-EXEC.  
       ******************************************************************
-      *ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
-      *27 NAKSHATRA WITH VARIATIONS OF QUERIES TODO 
+      *    MQ - ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
+      *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
       ******************************************************************
+      
+      *----------------------------------------------------------------
       *    4 SQL SQUERIES FOR TOTAL STATS SECTION 
+      *----------------------------------------------------------------
            EXEC SQL 
               DECLARE CRS2001 CURSOR FOR 
               SELECT 
@@ -171,7 +183,7 @@
               YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
-      ******************************************************************
+      *----------------------------------------------------------------
            EXEC SQL 
               DECLARE CRS2002 CURSOR FOR 
               SELECT 
@@ -186,7 +198,7 @@
               YEAR(:WS-QDATE-UPPER-DB2))  
               FOR FETCH ONLY 
            END-EXEC. 
-      ******************************************************************        
+      *----------------------------------------------------------------        
            EXEC SQL 
               DECLARE CRS2003 CURSOR FOR 
               SELECT 
@@ -201,7 +213,7 @@
               YEAR(:WS-QDATE-UPPER-DB2)) 
               FOR FETCH ONLY 
            END-EXEC. 
-      ******************************************************************        
+      *----------------------------------------------------------------        
            EXEC SQL 
               DECLARE CRS2004 CURSOR FOR 
               SELECT 
@@ -217,6 +229,31 @@
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************
+      *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
+      *         WITH VARIABLES
+      ******************************************************************
+           EXEC SQL 
+              DECLARE CRS2005 CURSOR FOR 
+              SELECT 
+      * TODO: FINISH IT LATER        
+              YEAR(BDATE), COUNT(*) *>AS NQGLOBAL
+              FROM CITIZENS 
+              WHERE ALIVE = :WS-QALIVE  
+              AND GENDER  = :WS-QGENDER  
+              AND (MONTH(BDATE) 
+              BETWEEN 
+              MONTH(:XX) *> IMPL. TABLE FOR 27 NAKSHATRAS M/D RANGE
+              AND 
+              MONTH(:XX-UPPER)) *> INT BETWEEN 1-12
+              AND (DAY(BDATE)
+              BETWEEN
+              DAY(:YY) *> INT BETWEEN 1-31
+              AND
+              DAY(:YY-UPPER))
+              GROUP BY YEAR(BDATE) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      *----------------------------------------------------------------
 
 
       ******************************************************************
@@ -334,9 +371,9 @@
       D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
       D             'USER, CURRENT DATE'
       ******************************************************************
-      *    VERIFY RECV01-INTERVAL-VAL
+      *    TEXT TO NUMERIC CONVERSION
       ******************************************************************
-           MOVE PARM-DATA(4:3) TO WS-PGM-INTERVAL-VAL
+           COMPUTE WS-PGM-INTERVAL-VAL = FUNCTION NUMVAL(PARM-DATA(4:3))
       ******************************************************************
       *    CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
       *    DIVIDE 120 BY INTERVAL-VAL  
@@ -631,7 +668,7 @@
       *        WHEN 1229 THRU 0110 *> REVERTES DATE DECEMBER -> JANUARY
               WHEN 1229 THRU 1231  *> DEC-JUN
                  COMPUTE WS-N(I,20) = WS-N(I,20) + 1
-              WHEN 0101 THRU 1010  *> DEV-JUN
+              WHEN 0101 THRU 0110  *> DEV-JUN
                  COMPUTE WS-N(I,20) = WS-N(I,20) + 1
               WHEN 0111
                  COMPUTE WS-U(I,20) = WS-U(I,20) + 1
