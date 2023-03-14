@@ -53,8 +53,8 @@
       ******************************************************************
       *    IMPLEMENTATION OF DB2 CONFIGURATION
       *       WE IMPLY DB2 HAS VARIABLES: 
-      *       DATE, GENDER: 1 OR 0 FOR 1=MALE, 0=FAMALE
-      *       ALIVE STATUS: 1 OR 0 FOR 1=ALIVE, 0=DEAD   
+      *       DATE, GENDER: M OR F FOR M=MALE,  F=FAMALE
+      *       ALIVE STATUS: A OR D FOR A=ALIVE, D=DEAD   
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -77,22 +77,24 @@
       * TODO: BINARY FORM OF DATA INSIDE THE STRUCTURE
       ******************************************************************
         05 RECV01-DS-HEADER.
+         07 RECV01-DS-LEN. *>TODO
         05 RECV01-DS-TABLE-STATS.
         05 RECV01-DS-SUMMARY.
 
       ******************************************************************      
        FD RECLOGR    
            BLOCK CONTAINS 0 RECORDS 
+      *    TODO:
       *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
-           RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !!!!
+           RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !
            DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
            RECORDING MODE IS V *> VB?
            DATA RECORD IS RECV01-DS-R. 
 
        01 RECV01-DS-R. 
         05 RECV01-DS-R-HEADER.
-        05 RECV01-DS-R-LEN. *>TODO
+         07 RECV01-DS-R-LEN. *>TODO
         05 RECV01-DS--RTABLE-STATS.
         *> HERE MAY BE MORE RTABLE-STATS FROM 1- 120
         05 RECV01-DS-R-SUMMARY.
@@ -102,23 +104,27 @@
       ****************************************************************** 
            EXEC SQL  
               INCLUDE SQLCA  
-           END-EXEC.
+           END-EXEC. 
       ******************************************************************
            EXEC SQL BEGIN DECLARE SECTION
-           END-EXEC.
-       01 WS-QREC01.
-        05 WS-QBDATE            PIC   X(10).
-        05 WS-QGENDER           PIC   9. *> CHANGE TO X'F' OR X'M'
-        05 WS-QALIVE            PIC   9. *> CHNGE TO X'A' OR 'D'
+           END-EXEC. 
+       01 WS-QREC01. 
+        05 WS-QBDATE             PIC   X(10).
+        05 WS-QGENDER            PIC   A. 
+        88 WS-QGENDER-FLAG-MALE    VALUE 'M'. 
+        88 WS-QDENDER-FLAG-FEMALE  VALUE 'F'. 
+        05 WS-QALIVE             PIC   A. 
+        88 WS-QALIVE-FLAG-ALIVE    VALUE 'A'. 
+        88 WS-QALIVE-FLAG-DEAD     VALUE 'D'. 
         05 WS-QDATE-CURRENT-DB2  PIC   X(10) 
            OCCURS 2 TIMES INDEXED BY INDEX-QDATE. 
         05 WS-QDATE-LOWER-DB2    PIC   X(10).
         05 WS-QDATE-UPPER-DB2    PIC   X(10).
-        05 WS-QINTERVAL          PIC   S9(3) COMP-5 .
+        05 WS-QINTERVAL          PIC   S9(3) COMP-5. 
         05 WS-QDATE-TMP          PIC   S9(3) COMP-5 VALUES ZEROES.
         05 WS-QCOUNT             PIC   9(9) COMP-5.
            EXEC SQL END DECLARE SECTION
-           END-EXEC.
+           END-EXEC. 
       ******************************************************************
       *HELP QUERY TO DETECT DB2 DATE FORMAT
            EXEC SQL  
@@ -156,8 +162,8 @@
               SELECT 
               COUNT(*) *> AS ALIVEMALE 
               FROM CITIZENS 
-              WHERE ALIVE = 1 
-              AND GENDER = 1 
+              WHERE ALIVE = 'A' 
+              AND GENDER = 'M' 
               AND (YEAR(BDATE) 
               BETWEEN 
               YEAR(:WS-QDATE-LOWER-DB2) 
@@ -171,8 +177,8 @@
               SELECT 
               COUNT(*) *>AS ALIVEFEMALE 
               FROM CITIZENS 
-              WHERE ALIVE = 1 
-              AND GENDER = 0 
+              WHERE ALIVE = 'A'
+              AND GENDER = 'F' 
               AND (YEAR(BDATE) 
               BETWEEN 
               YEAR(:WS-QDATE-LOWER-DB2) 
@@ -186,8 +192,8 @@
               SELECT 
               COUNT(*) *>AS DEADMALE 
               FROM CITIZENS 
-              WHERE ALIVE = 0 
-              AND GENDER = 1 
+              WHERE ALIVE = 'D' 
+              AND GENDER = 'M' 
               AND (YEAR(BDATE) 
               BETWEEN 
               YEAR(:WS-QDATE-LOWER-DB2) 
@@ -201,8 +207,8 @@
               SELECT 
               COUNT(*) *>AS DEADFEMALE
               FROM CITIZENS 
-              WHERE ALIVE = 0 
-              AND GENDER = 0 
+              WHERE ALIVE = 'D' 
+              AND GENDER = 'F' 
               AND (YEAR(BDATE) 
               BETWEEN 
               YEAR(:WS-QDATE-LOWER-DB2) 
@@ -285,10 +291,10 @@
       * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
-        05 WS-MONTH-DAY      PIC   9(4).  
+        05 WS-MONTH-DAY               PIC   9(4).  
       ******************************************************************
       * FS
-       01 WS-EOF-FLAG        PIC   A.
+       01 WS-EOF-FLAG                 PIC   A.
       ******************************************************************
       * FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC   S9(9) BINARY.
@@ -526,23 +532,23 @@
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
       ******************************************************************
            EVALUATE WS-QALIVE
-              WHEN 1
+              WHEN 'A'
            EVALUATE WS-QGENDER
-              WHEN 1
+              WHEN 'M'
               COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1
-              WHEN 0
+              WHEN 'F'
               COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1
            END-EVALUATE 
-              WHEN 2 *> DEAD
+              WHEN 'D' *> DEAD
            EVALUATE WS-QGENDER
-              WHEN 1
+              WHEN 'M'
               COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1
-              WHEN 0
+              WHEN 'F'
               COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1
            END-EVALUATE       
            END-EVALUATE
      
-           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE TODO
+           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
               WHEN 0414 THRU 0426
@@ -674,7 +680,7 @@
            DISPLAY RECV01-HLINE
            DISPLAY RECV01-HLINE
            DISPLAY 'NCITIZEN - (VEDIC ASTROLOGY) NAKSHATRA CITIZEN',
-           ' SOFTWARE'
+           ' SOFTWARE (C) GNU GPLV3 2023 PRZEMYSLAW ADAM KUPISZ'
            DISPLAY 'SUBMITTED FOR USER: ', RECV01-USER,
            ' AT ', RECV01-PGM-START-DATE
            DISPLAY 'INTERVAL SET TO: ', RECV01-INTERVAL-VAL
@@ -754,7 +760,7 @@
            EVALUATE LK-FS-W       *> FILE STATUS
               WHEN 35           *> CAN NOT OPEN DS
            DISPLAY 'WARNING: ',
-           'PRINT ONLY TO SPOOL, DATASET CAN NOT BE OPEN'
+           'PRINTS TO SPOOL ONLY, CANNOT OPEN DATASET.'
               WHEN 05           *> DS DOES NOT EXIST, CREATING NEW DS
            DISPLAY 'INFO:    ',
            'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
