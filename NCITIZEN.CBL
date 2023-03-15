@@ -113,6 +113,9 @@
            EXEC SQL  
               INCLUDE SQLCA  
            END-EXEC. 
+      *     EXEC SQL
+      *        INCLUDE DCLEMP *> DCLGEN FOR FUTURE USE
+      *     END-EXEC.
       * ---------------------------------------------------------------
            EXEC SQL BEGIN DECLARE SECTION
            END-EXEC. 
@@ -409,6 +412,7 @@
            EXEC SQL
               OPEN CRS1
            END-EXEC. 
+           PERFORM PARA-SQL-ERROR-CHECK 
       *     
            EXEC SQL
            FETCH CRS1 INTO 
@@ -424,44 +428,39 @@
            EXEC SQL
               CLOSE CRS1
            END-EXEC.
+           PERFORM PARA-SQL-ERROR-CHECK 
       * ---------------------------------------------------------------  
            EXEC SQL
               OPEN CRS2
            END-EXEC. 
+           PERFORM PARA-SQL-ERROR-CHECK 
       *     
            EXEC SQL
            FETCH CRS2 INTO 
               :WS-QREC01-DATE-UPPER 
            END-EXEC        
-           EVALUATE SQLCODE 
-            WHEN ZERO 
-           *>TODO
-           WHEN OTHER
-            PERFORM PARA-SQL-ERROR-CHECK 
-           END-EVALUATE
+           PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
               CLOSE CRS2
            END-EXEC.
+           PERFORM PARA-SQL-ERROR-CHECK 
       * ---------------------------------------------------------------     
            EXEC SQL
               OPEN CRS3
            END-EXEC. 
+           PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
            FETCH CRS3 INTO 
               :WS-QREC01-DATE-UPPER-I 
            END-EXEC 
-           EVALUATE SQLCODE 
-            WHEN ZERO 
-           *>TODO
-           WHEN OTHER
-            PERFORM PARA-SQL-ERROR-CHECK 
-           END-EVALUATE
+           PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
               CLOSE CRS3
            END-EXEC.
+           PERFORM PARA-SQL-ERROR-CHECK 
       ******************************************************************
            EXIT.
       ******************************************************************
@@ -471,6 +470,7 @@
            EXEC SQL
               OPEN CRS1001
            END-EXEC.
+           PERFORM PARA-SQL-ERROR-CHECK 
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
            SET I TO 1 
@@ -486,10 +486,7 @@
               :WS-QREC01-GENDER, 
               :WS-QREC01-ALIVE 
             END-EXEC 
-
-           IF (SQLCODE NOT = 0 AND 100) THEN
            PERFORM PARA-SQL-ERROR-CHECK 
-           END-IF 
       ******************************************************************
       *    COMPUTES NAKSHATRA 
       ******************************************************************
@@ -505,6 +502,7 @@
            EXEC SQL
               CLOSE CRS1001
            END-EXEC.   
+           PERFORM PARA-SQL-ERROR-CHECK 
            EXIT.
       ******************************************************************
        PARA-SQL-MQ. 
@@ -515,6 +513,7 @@
            EXEC SQL 
             OPEN CRS2001 
            END-EXEC. 
+           PERFORM PARA-SQL-ERROR-CHECK 
       *     
            PERFORM
             VARYING WS-SQL-MQ-I
@@ -529,11 +528,8 @@
             FETCH CRS2001 INTO 
             :WS-QREC01-MQ-YEAR, 
             :WS-QREC01-MQ-NR 
-           END-EXEC 
-      *    RC CHECK   
-           IF (SQLCODE NOT = 0 AND 100) THEN
+           END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
-           END-IF 
       *    TODO MOVE TO RECV01 
 
            END-PERFORM 
@@ -541,6 +537,7 @@
            EXEC SQL
             CLOSE CRS2001
            END-EXEC.
+           PERFORM PARA-SQL-ERROR-CHECK 
            EXIT.
       ******************************************************************
        PARA-NAKSHATRA-COMPUTE.
@@ -553,23 +550,23 @@
       *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
       ******************************************************************
-           EVALUATE WS-QREC01-ALIVE
-              WHEN 'A'
-           EVALUATE WS-QREC01-GENDER
-              WHEN 'M'
+           EVALUATE TRUE 
+           WHEN WS-QREC01-ALIVE-FLAG-ALIVE 
+            EVALUATE TRUE 
+              WHEN WS-QREC01-GENDER-FLAG-MALE 
               COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1
-              WHEN 'F'
+              WHEN WS-QREC01-DENDER-FLAG-FEMALE 
               COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1
-           END-EVALUATE 
-              WHEN 'D' *> DEAD
-           EVALUATE WS-QREC01-GENDER
-              WHEN 'M'
+            END-EVALUATE 
+           WHEN WS-QREC01-ALIVE-FLAG-DEAD 
+            EVALUATE TRUE 
+              WHEN WS-QREC01-GENDER-FLAG-MALE 
               COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1
-              WHEN 'F'
+              WHEN WS-QREC01-DENDER-FLAG-FEMALE 
               COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1
-           END-EVALUATE       
+            END-EVALUATE       
            END-EVALUATE
-     
+      * ---------------------------------------------------------------
            EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
               WHEN 0413
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1
@@ -810,6 +807,13 @@
            EXIT. 
       ******************************************************************    
        PARA-SQL-ERROR-CHECK.
+      ******************************************************************
+           EVALUATE SQLCODE 
+           WHEN ZERO 
+           CONTINUE 
+           WHEN 100 
+           CONTINUE
+           WHEN OTHER 
       ************** DB2 Error Handling Routine
            DISPLAY '*************************************************'
            DISPLAY '**** E R R O R M E S S A G E S ****'
@@ -820,8 +824,8 @@
            DISPLAY '* SQLCODE: ' SQLCODE
            DISPLAY '*************************************************'
            CALL "CEE3ABD" USING ABEND-CODE , TIMING    
-           EXIT.
-
+           END-EVALUATE 
+           EXIT. 
       ******************************************************************
       *    THIS PART OF CODE IS NOT NEEDED
       *    WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE

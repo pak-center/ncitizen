@@ -48,7 +48,7 @@ Afterwards, does the analytics and displays the statistics with horizontal bar v
 Project is created with:
 
 * COBOL
-* EMBEDDED SQL as DB2 CONNECTION
+* EMBEDDED SQL (SQLCA) as DB2 CONNECTION
 * JCL
 
 ## Installation
@@ -60,15 +60,16 @@ Project is created with:
 ## Features
 
 SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
-| Feature       | % Progress | Status |
-| ---           | ---        |--- |
-| SLOW SQL SQ   | ########## | Completed |
+| Feature       | % Progress | Status      |
+| ---           | ---        |---          |
+| SLOW SQL SQ   | ########## | Completed   |
+| ROWSET for SQ | #          | In Progress |
 | FAST SQL MQ   | ####       | In Progress |
-| QSAM WRITE    | ########## | Completed |
-| QSAM READ     | #########   | In Progress |
-| PRINT STATS   | ## | In Progress |
-| H-BAR CHARTS  | # | In Progress |
-| Beautify code | ### | In Progress |
+| QSAM WRITE    | ########## | Completed   |
+| QSAM READ     | #########  | In Progress |
+| PRINT STATS   | ##         | In Progress |
+| H-BAR CHARTS  | #          | In Progress |
+| Beautify code | ###        | In Progress |
 
 ## Run the Project
 
@@ -119,6 +120,7 @@ PARM='MQ,73' inserted in JCL by the user is corrected to PARM='MQ,120' internall
 * add WRITE RECORDS to QSAM dataset VB800 as backup and for future READ only FOR DISPLAY (no SQL queries)
 * DISPLAY TO SPOOL user frendly reports
 * create sample JCL for SUB
+* DCLGEN
 
 ## License
 
