@@ -65,10 +65,10 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | SLOW SQL SQ   | ########## | Completed |
 | FAST SQL MQ   | ####       | In Progress |
 | QSAM WRITE    | ########## | Completed |
-| QSAM READ     | ########   | In Progress |
+| QSAM READ     | #########   | In Progress |
 | PRINT STATS   | ## | In Progress |
 | H-BAR CHARTS  | # | In Progress |
-| Beautify code | # | In Progress |
+| Beautify code | ### | In Progress |
 
 ## Run the Project
 
