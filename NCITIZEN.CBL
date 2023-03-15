@@ -119,16 +119,16 @@
        01 WS-QREC01. 
       *  05 WS-QREC01-DATE-DB2       PIC   X(10). *> CHAR FOR DB2 DATE
       * ---------------------------------------------------------------
-        05 WS-QREC01-GENDER              PIC   A. 
-        88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
-        88 WS-QREC01-DENDER-FLAG-FEMALE  VALUE 'F'. 
-      * ---------------------------------------------------------------  
-        05 WS-QREC01-ALIVE               PIC   A. 
-        88 WS-QREC01-ALIVE-FLAG-ALIVE    VALUE 'A'. 
-        88 WS-QREC01-ALIVE-FLAG-DEAD     VALUE 'D'. 
-      * ---------------------------------------------------------------
         05 WS-QREC01-COMMON. 
          07 WS-QREC01-INTERVAL-DECIMAL   PIC   S999 COMP-3 VALUE 10.
+      * ---------------------------------------------------------------   
+         07 WS-QREC01-GENDER              PIC   A. 
+         88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
+         88 WS-QREC01-DENDER-FLAG-FEMALE  VALUE 'F'. 
+      * ---------------------------------------------------------------  
+         07 WS-QREC01-ALIVE               PIC   A. 
+         88 WS-QREC01-ALIVE-FLAG-ALIVE    VALUE 'A'. 
+         88 WS-QREC01-ALIVE-FLAG-DEAD     VALUE 'D'. 
       * ---------------------------------------------------------------   
         05 WS-QREC01-SQ.
          07 WS-QREC01-SQ-DATE            PIC   X(10).
@@ -189,7 +189,7 @@
               WHERE YEAR(BDATE) 
               BETWEEN 
               YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
-              :WS-QREC01-INTERVAL-DECIMAL)) 
+              :WS-QREC01-INTERVAL-DECIMAL)) *>MUST BE NEGATIVE, *(-1)
               AND 
               YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
               :WS-QREC01-INTERVAL-DECIMAL)) 
@@ -201,7 +201,7 @@
       ******************************************************************
       * ---------------------------------------------------------------
       *    DYNAMIC SQL SQUERY FOR TOTAL STATS SECTION 
-      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER)
+      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER) FOR EVERY INTERVAL
       *    A,M A,F D,M D,F
       * ---------------------------------------------------------------
            EXEC SQL 
@@ -228,7 +228,7 @@
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
-      
+      *    TODO
       * ---------------------------------------------------------------
 
 
@@ -241,7 +241,7 @@
       *    STRUCTURE MUST BE READ BY PGM AND PRINT - DISPLAY TO THE USER
       ******************************************************************
        01 RECV01.
-      ******************************************************************
+      * ---------------------------------------------------------------
         05 RECV01-HEADER.
          10 RECV01-RLENGTH         PIC   9(4) COMP-5. *> 65535
          10 FILLER                 PIC   X(76).
@@ -257,7 +257,7 @@
          10 RECV01-INTERVAL-VAL    PIC   S999 COMP-3 VALUE 10. 
          10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
 
-      ******************************************************************        
+      * ---------------------------------------------------------------        
       * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
@@ -265,29 +265,32 @@
          15 RECV01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
           20 RECV01-MALE           PIC   9(9) COMP-5. *>(18) MAX
           20 RECV01-FEMALE         PIC   9(9) COMP-5.
-      *  15 RECV01-ALIVE           PIC   9(9) COMP-5.
-      *  15 RECV01-DEAD            PIC   9(9) COMP-5.
-         15 RECV01-NTAB OCCURS 27 TIMES.
+         15 RECV01-NTAB OCCURS 27 TIMES. *>INDEXED BY
           20 WS-N                  PIC   9(9) COMP-5.
           20 WS-U                  PIC   9(9) COMP-5.
-      
-      ******************************************************************
+          20 RECV01-NTAB-AGE OCCURS 120 TIMES. *>INDEXED BY
+           25 RECV01-NTAB-AGE      PIC 9(9) COMP-5. 
+           25 RECV01-NTAB-AGE-U    PIC 9(9) COMP-5. 
+          20 RECV01-NTAB-CITIZEN OCCURS 2 TIMES. 
+           25 RECV01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
+           25 RECV01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
+      * ---------------------------------------------------------------
         05 RECV01-SUMMARY.   
          10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
          10 RECV01-S-TALIVE-CP     PIC   9(9) COMP-5.
          10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
          10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
-      ******************************************************************        
+      * ---------------------------------------------------------------        
       * THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
        01 WS-PGM-INPUT.
          05 WS-PGM-ARGS.
-           15 WS-PGM-MODE                 PIC   AA. *> 'SQ','MQ' OR 'DS'
+           15 WS-PGM-MODE                 PIC   AA. *> 'SQ','MQ','DS'
            15 WS-PGM-SEPARATOR            PIC   X VALUE ','.
            15 WS-PGM-INTERVAL-VAL         PIC   S999 COMP-3 VALUE 10.
-           88 WS-PGM-PASS VALUES ARE 01 THRU 120.
+      *     88 WS-PGM-PASS VALUES ARE 1 THRU 120.
          05 WS-PGM-RESULT                 PIC   S9(3).
          05 WS-PGM-REMINDER               PIC   S9(3).
-      ******************************************************************
+      * ---------------------------------------------------------------
          05 WS-TAB-COUNTER            PIC   S9(3) VALUE 1.
          05 WS-DB2-DATE-FORMAT        PIC   X(10).
       ******************************************************************   
@@ -322,34 +325,63 @@
       ******************************************************************
       *    PROCEDURE DIVISION
       ******************************************************************
-       PROCEDURE DIVISION USING PARM-BUFFER, LK-FS-W, LK-FS-R.
+       PROCEDURE DIVISION USING PARM-BUFFER, LK-FS-W, LK-FS-R. 
       ******************************************************************
-      *  LEGACY ARGS CHECKING, NEEDS FIX FOR ONE MORE PARAM 
-      *  E.G.  IS (120) MUST BE (D,1) OR (Q,120) 
+      *    ARGS CHECKING COMPLETE
       ******************************************************************
-           IF NOT PARM-LENGTH > 0 THEN
-              DISPLAY 'WARNING: JCL PARM IS EMPTY. ',
-              'AUTO COMPLEMENT INTERVAL SET TO 10'
-              MOVE 10 TO RECV01-INTERVAL-VAL
-              MOVE 1 TO RETURN-CODE
-           ELSE
-  
-           IF NOT WS-PGM-PASS THEN
-              DISPLAY 
+           EVALUATE PARM-LENGTH ALSO PARM-DATA(1:2) 
+           WHEN 2 ALSO 'DS' 
+            PERFORM PARA-READ-FROM-DATASET 
+            PERFORM PARA-CREATE-VIEW 
+           WHEN 2 THRU 6 ALSO 'SQ' 
+              *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
+            PERFORM PARA-VALIDATE-ARGS  
+            PERFORM PARA-SQL-DATE-DB2 
+            PERFORM PARA-SQL-SQ *> (PARA-NAKSHATRA-COMPUTE INSIDE)
+            PERFORM PARA-ANALYSE-DATA
+            PERFORM PARA-CREATE-VIEW
+            PERFORM PARA-WRITE-TO-DATASET
+           WHEN 2 THRU 6 ALSO 'MQ' 
+              *> FASTER & EFFCIENT SQL (MULTI) QUERIES
+              *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
+            PERFORM PARA-VALIDATE-ARGS
+            PERFORM PARA-SQL-DATE-DB2 
+            PERFORM PARA-SQL-MQ
+            PERFORM PARA-ANALYSE-DATA
+            PERFORM PARA-CREATE-VIEW
+            PERFORM PARA-WRITE-TO-DATASET
+           WHEN OTHER 
+            DISPLAY 'WARNING: WRONG PARM IN JCL. PARM=',
+             PARM-DATA(1:PARM-LENGTH)
+            DISPLAY ' NOTHING TO DO... SORRY. EXITS PGM' 
+            MOVE 2 TO RETURN-CODE 
+           END-EVALUATE   
+      ******************************************************************
+      D    DISPLAY 'DEBUG: RC=', RETURN-CODE
+           STOP RUN.
+      ******************************************************************
+      * STOP RUN PGM
+      ******************************************************************
+       PARA-VALIDATE-ARGS.
+      ******************************************************************
+      *    TEXT TO NUMERIC CONVERSION & LENGTH CHECK 1-120
+      ******************************************************************     
+           COMPUTE WS-PGM-INTERVAL-VAL = 
+           FUNCTION NUMVAL(PARM-DATA(4:(PARM-LENGTH - 3)))
+           IF NOT (WS-PGM-INTERVAL-VAL > 0 AND 
+            WS-PGM-INTERVAL-VAL <= 120)
+            MOVE 10 TO WS-PGM-INTERVAL-VAL *> SETS DEFAULT INTERVAL
+            DISPLAY 
               'WARNING: JCL PARM RANGE IS WRONG. TRY 001 TO 120 ',
               'AUTO COMPLEMENT INTERVAL SET TO 10'
-              MOVE 10 TO RECV01-INTERVAL-VAL
-              MOVE 2 TO RETURN-CODE
-           ELSE
-              ACCEPT RECV01-PGM-START-DATE FROM DATE YYYYMMDD
-              ACCEPT RECV01-USER           FROM USERNAME
+            MOVE 2 TO RETURN-CODE  
+           END-IF
+      * ---------------------------------     
+           ACCEPT RECV01-PGM-START-DATE FROM DATE YYYYMMDD
+           ACCEPT RECV01-USER           FROM USERNAME
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
       D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
-      D             'USER, CURRENT DATE'
-      ******************************************************************
-      *    TEXT TO NUMERIC CONVERSION
-      ******************************************************************
-           COMPUTE WS-PGM-INTERVAL-VAL = FUNCTION NUMVAL(PARM-DATA(4:3))
+      D             'USER, CURRENT DATE'            
       ******************************************************************
       *    CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
       *    DIVIDE 120 BY INTERVAL-VAL  
@@ -364,38 +396,8 @@
            END-PERFORM
            MOVE WS-PGM-INTERVAL-VAL TO RECV01-INTERVAL-VAL *>4SQL Q
            DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB         
-      ******************************************************************
-           EVALUATE WS-PGM-MODE
-           WHEN 'SQ' *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
-              PERFORM PARA-SQL-DATE-DB2 
-              PERFORM PARA-SQL-SQ *>(PARA-NAKSHATRA-COMPUTE INSIDE)
-              PERFORM PARA-ANALYSE-DATA
-              PERFORM PARA-CREATE-VIEW
-              PERFORM PARA-WRITE-TO-DATASET
-           WHEN 'MQ' *> FASTER & EFFCIENT SQL (MULTI) QUERIES
-                     *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
-              PERFORM PARA-SQL-DATE-DB2 
-              PERFORM PARA-SQL-MQ
-              PERFORM PARA-ANALYSE-DATA
-              PERFORM PARA-CREATE-VIEW
-              PERFORM PARA-WRITE-TO-DATASET
-           WHEN 'DS'
-              PERFORM PARA-READ-FROM-DATASET
-              PERFORM PARA-CREATE-VIEW
-           WHEN OTHER
-           DISPLAY 'WARNING: WRONG PARM IN JCL. IS=', WS-PGM-MODE
-           DISPLAY ' NOTHING TO DO... EXITS PGM'
-           MOVE 2 TO RETURN-CODE
-           END-EVALUATE
-                    
-      *        MOVE 0 TO RETURN-CODE
-           END-IF
-           END-IF
-      D    DISPLAY 'DEBUG: RC=', RETURN-CODE
-           STOP RUN.
-      ******************************************************************
-      * STOP RUN PGM
-      ******************************************************************
+      
+           EXIT.      
       ******************************************************************
       *    PARAGRAPH SQL DATE DB2
       ******************************************************************
