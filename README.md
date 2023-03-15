@@ -63,8 +63,9 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | Feature       | % Progress | Status      |
 | ---           | ---        |---          |
 | SLOW SQL SQ   | ########## | Completed   |
-| ROWSET for SQ | #          | In Progress |
+| ROWSET for SQ | ########## | Completed   |
 | FAST SQL MQ   | ####       | In Progress |
+| ROWSET for MQ | ##         | In Progress |
 | QSAM WRITE    | ########## | Completed   |
 | QSAM READ     | #########  | In Progress |
 | PRINT STATS   | ##         | In Progress |

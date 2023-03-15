@@ -125,24 +125,29 @@
         05 WS-QREC01-COMMON. 
          07 WS-QREC01-INTERVAL-DECIMAL   PIC   S999 COMP-3 VALUE 10.
       * ---------------------------------------------------------------   
-         07 WS-QREC01-GENDER              PIC   A. 
+         07 WS-QREC01-GENDER              PIC   X. *> DB2 CHAR  
          88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
          88 WS-QREC01-DENDER-FLAG-FEMALE  VALUE 'F'. 
       * ---------------------------------------------------------------  
-         07 WS-QREC01-ALIVE               PIC   A. 
+         07 WS-QREC01-ALIVE               PIC   X. *> DB2 CHAR 
          88 WS-QREC01-ALIVE-FLAG-ALIVE    VALUE 'A'. 
          88 WS-QREC01-ALIVE-FLAG-DEAD     VALUE 'D'. 
       * ---------------------------------------------------------------   
         05 WS-QREC01-SQ.
          07 WS-QREC01-SQ-DATE            PIC   X(10).
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
+      *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
+        05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
+         10 WS0QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES. 
+         10 WS0QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES. 
+         10 WS0QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES.          
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
-         07 WS-QREC01-MQ-YEAR PIC   S9(4) COMP-5.
-         07 WS-QREC01-MQ-NR   PIC   S9(9) COMP-5.
+         07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP-5.
+         07 WS-QREC01-MQ-NR              PIC   S9(9)  COMP-5.
       * ---------------------------------------------------------------
            EXEC SQL END DECLARE SECTION 
            END-EXEC. 
@@ -153,7 +158,7 @@
       *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
       * ---------------------------------------------------------------
            EXEC SQL  
-              DECLARE CRS1 CURSOR FOR 
+              DECLARE CD01 CURSOR FOR 
               SELECT 
               THIS_YEAR(CURRENT DATE) 
               FROM SYSIBM.SYSDUMMY1 
@@ -163,7 +168,7 @@
       *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
       * ---------------------------------------------------------------
            EXEC SQL  
-              DECLARE CRS2 CURSOR FOR 
+              DECLARE CD02 CURSOR FOR 
               SELECT 
               THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
               FROM SYSIBM.SYSDUMMY1 
@@ -171,7 +176,7 @@
            END-EXEC.
       *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION 
             EXEC SQL  
-              DECLARE CRS3 CURSOR FOR 
+              DECLARE CD03 CURSOR FOR 
               SELECT 
               DATE(:WS-QREC01-DATE-UPPER) + 
                :WS-QREC01-INTERVAL-DECIMAL YEARS 
@@ -182,8 +187,8 @@
       *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
       *         WORST PERFORMANCE AND HEAVY LOAD   
       ******************************************************************
-           EXEC SQL  
-              DECLARE CRS1001 CURSOR FOR  
+           EXEC SQL 
+              DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
               BDATE, 
               GENDER, 
@@ -208,7 +213,7 @@
       *    A,M A,F D,M D,F
       * ---------------------------------------------------------------
            EXEC SQL 
-              DECLARE CRS2001 CURSOR FOR 
+              DECLARE MQ01 CURSOR FOR 
               SELECT 
               YEAR(BDATE), COUNT(*) *>AS NR 
               FROM CITIZENS 
@@ -410,12 +415,12 @@
       ******************************************************************
        PARA-SQL-DATE-DB2. 
            EXEC SQL
-              OPEN CRS1
+              OPEN CD01
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
       *     
            EXEC SQL
-           FETCH CRS1 INTO 
+           FETCH CD01 INTO 
               :WS-QREC01-DATE-LOWER 
            END-EXEC 
            EVALUATE SQLCODE 
@@ -426,39 +431,39 @@
            END-EVALUATE
       *
            EXEC SQL
-              CLOSE CRS1
+              CLOSE CD01
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
       * ---------------------------------------------------------------  
            EXEC SQL
-              OPEN CRS2
+              OPEN CD02
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
       *     
            EXEC SQL
-           FETCH CRS2 INTO 
+           FETCH CD02 INTO 
               :WS-QREC01-DATE-UPPER 
            END-EXEC        
            PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
-              CLOSE CRS2
+              CLOSE CD02
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
       * ---------------------------------------------------------------     
            EXEC SQL
-              OPEN CRS3
+              OPEN CD03
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
-           FETCH CRS3 INTO 
+           FETCH CD03 INTO 
               :WS-QREC01-DATE-UPPER-I 
            END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
       *
            EXEC SQL
-              CLOSE CRS3
+              CLOSE CD03
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
       ******************************************************************
@@ -468,7 +473,7 @@
       ******************************************************************     
        PARA-SQL-SQ.    
            EXEC SQL
-              OPEN CRS1001
+              OPEN SQ01 
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
@@ -480,17 +485,17 @@
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-           FETCH CRS1001 
+           FETCH NEXT ROWSET FROM SQ01 FOR 2000 ROWS 
            INTO 
-              :WS-QREC01-SQ-DATE, 
-              :WS-QREC01-GENDER, 
-              :WS-QREC01-ALIVE 
-            END-EXEC 
+           :WS0QREC01-SQ-ROWSET-BDATE, 
+           :WS0QREC01-SQ-ROWSET-GENDER, 
+           :WS0QREC01-SQ-ROWSET-ALIVE 
+           END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
       ******************************************************************
       *    COMPUTES NAKSHATRA 
       ******************************************************************
-           PERFORM PARA-NAKSHATRA-COMPUTE *>TODO
+           PERFORM PARA-NAKSHATRA-COMPUTE *>TODO FOR ROWSET!
            END-PERFORM
 
       ******************************************************************        
@@ -500,7 +505,7 @@
            END-PERFORM 
 
            EXEC SQL
-              CLOSE CRS1001
+              CLOSE SQ01 
            END-EXEC.   
            PERFORM PARA-SQL-ERROR-CHECK 
            EXIT.
@@ -511,7 +516,7 @@
       ******************************************************************
       *     PERFORM  *> TODO
            EXEC SQL 
-            OPEN CRS2001 
+            OPEN MQ01 
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
       *     
@@ -525,7 +530,7 @@
       *    TOTAL CITIZENS COUNT 
       ******************************************************************
            EXEC SQL 
-            FETCH CRS2001 INTO 
+            FETCH MQ01 INTO 
             :WS-QREC01-MQ-YEAR, 
             :WS-QREC01-MQ-NR 
            END-EXEC  
@@ -535,7 +540,7 @@
            END-PERFORM 
       *     
            EXEC SQL
-            CLOSE CRS2001
+            CLOSE MQ01
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
            EXIT.
@@ -547,9 +552,13 @@
               *> WS-QBDATE
               *> WS-QGENDER
               *> WS-QALIVE
-      *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
+      *    EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
       ******************************************************************
+           
+           *>TODO:
+           *> LEGACY CODE MODIFY IT FOR ROWSET SUPPORT TOMORROW
+           *> MOVE TO LOOP FOR ARRAY_2000 !
            EVALUATE TRUE 
            WHEN WS-QREC01-ALIVE-FLAG-ALIVE 
             EVALUATE TRUE 
