@@ -99,7 +99,7 @@
            DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
            RECORDING MODE IS V 
            DATA RECORD IS RECV01-DS-R. 
-      *-----------------------------------------------------------------
+      * ----------------------------------------------------------------
        01 RECV01-DS-R. 
         05 RECV01-DS-R-HEADER.
          07 RECV01-DS-R-LEN. *>TODO
@@ -117,38 +117,70 @@
            EXEC SQL BEGIN DECLARE SECTION
            END-EXEC. 
        01 WS-QREC01. 
-        05 WS-QBDATE             PIC   X(10).
-        05 WS-QGENDER            PIC   A. 
-        88 WS-QGENDER-FLAG-MALE    VALUE 'M'. 
-        88 WS-QDENDER-FLAG-FEMALE  VALUE 'F'. 
-        05 WS-QALIVE             PIC   A. 
-        88 WS-QALIVE-FLAG-ALIVE    VALUE 'A'. 
-        88 WS-QALIVE-FLAG-DEAD     VALUE 'D'. 
-        05 WS-QDATE-CURRENT-DB2  PIC   X(10) 
-           OCCURS 2 TIMES INDEXED BY INDEX-QDATE. 
-        05 WS-QDATE-LOWER-DB2    PIC   X(10).
-        05 WS-QDATE-UPPER-DB2    PIC   X(10).
-        05 WS-QINTERVAL          PIC   S9(3) COMP-5. 
-        05 WS-QDATE-TMP          PIC   S9(3) COMP-5 VALUES ZEROES.
-        05 WS-QCOUNT             PIC   9(9) COMP-5.
-           EXEC SQL END DECLARE SECTION
+      *  05 WS-QREC01-DATE-DB2       PIC   X(10). *> CHAR FOR DB2 DATE
+      * ---------------------------------------------------------------
+        05 WS-QREC01-GENDER              PIC   A. 
+        88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
+        88 WS-QREC01-DENDER-FLAG-FEMALE  VALUE 'F'. 
+      * ---------------------------------------------------------------  
+        05 WS-QREC01-ALIVE               PIC   A. 
+        88 WS-QREC01-ALIVE-FLAG-ALIVE    VALUE 'A'. 
+        88 WS-QREC01-ALIVE-FLAG-DEAD     VALUE 'D'. 
+      * ---------------------------------------------------------------
+        05 WS-QREC01-COMMON. 
+         07 WS-QREC01-INTERVAL-DECIMAL   PIC   S999 COMP-3 VALUE 10.
+      * ---------------------------------------------------------------   
+        05 WS-QREC01-SQ.
+         07 WS-QREC01-SQ-DATE            PIC   X(10).
+      *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
+      * ---------------------------------------------------------------  
+        05 WS-QREC01-MQ.
+         07 WS-QREC01-DATE-LOWER         PIC   X(10). 
+         07 WS-QREC01-DATE-UPPER         PIC   X(10). 
+         07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
+         07 WS-QREC01-MQ-YEAR PIC   S9(4) COMP-5.
+         07 WS-QREC01-MQ-NR   PIC   S9(9) COMP-5.
+      * ---------------------------------------------------------------
+           EXEC SQL END DECLARE SECTION 
            END-EXEC. 
       ******************************************************************
-      *SUPPORT QUERY TO DETECT DB2 DATE FORMAT
+      *    INITIALIZE VARIABLES FOR SQL EXECS
+      ******************************************************************
+      * --------------------------------------------------------------- 
+      *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
+      * ---------------------------------------------------------------
            EXEC SQL  
-              DECLARE CRS2 CURSOR FOR 
+              DECLARE CRS1 CURSOR FOR 
               SELECT 
-              YEAR(CURRENT DATE + :WS-QDATE-TMP YEARS) 
-      *        YEAR(CURRENT DATE)
+              THIS_YEAR(CURRENT DATE) 
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
+      * --------------------------------------------------------------- 
+      *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
+      * ---------------------------------------------------------------
+           EXEC SQL  
+              DECLARE CRS2 CURSOR FOR 
+              SELECT 
+              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.
+      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION 
+            EXEC SQL  
+              DECLARE CRS3 CURSOR FOR 
+              SELECT 
+              DATE(:WS-QREC01-DATE-UPPER) + 
+               :WS-QREC01-INTERVAL-DECIMAL YEARS 
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.     
       ******************************************************************
       *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
       *         WORST PERFORMANCE AND HEAVY LOAD   
       ******************************************************************
            EXEC SQL  
-              DECLARE CRS1 CURSOR FOR  
+              DECLARE CRS1001 CURSOR FOR  
               SELECT 
               BDATE, 
               GENDER, 
@@ -156,104 +188,48 @@
               FROM CITIZENS 
               WHERE YEAR(BDATE) 
               BETWEEN 
-              :WS-QDATE-LOWER-DB2 - :WS-QINTERVAL *>YEARS 
+              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
+              :WS-QREC01-INTERVAL-DECIMAL)) 
               AND 
-              :WS-QDATE-UPPER-DB2 - :WS-QINTERVAL 
+              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
+              :WS-QREC01-INTERVAL-DECIMAL)) 
               FOR FETCH ONLY 
            END-EXEC.  
       ******************************************************************
       *    MQ - ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
       *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
       ******************************************************************
-      
-      *----------------------------------------------------------------
-      *    4 SQL SQUERIES FOR TOTAL STATS SECTION 
-      *----------------------------------------------------------------
+      * ---------------------------------------------------------------
+      *    DYNAMIC SQL SQUERY FOR TOTAL STATS SECTION 
+      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER)
+      *    A,M A,F D,M D,F
+      * ---------------------------------------------------------------
            EXEC SQL 
               DECLARE CRS2001 CURSOR FOR 
               SELECT 
-              COUNT(*) *> AS ALIVEMALE 
+              YEAR(BDATE), COUNT(*) *>AS NR 
               FROM CITIZENS 
-              WHERE ALIVE = 'A' 
-              AND GENDER = 'M' 
-              AND (YEAR(BDATE) 
-              BETWEEN 
-              YEAR(:WS-QDATE-LOWER-DB2) 
+              WHERE 
+              ALIVE = :WS-QREC01-ALIVE 
               AND 
-              YEAR(:WS-QDATE-UPPER-DB2)) 
-              FOR FETCH ONLY 
-           END-EXEC. 
-      *----------------------------------------------------------------
-           EXEC SQL 
-              DECLARE CRS2002 CURSOR FOR 
-              SELECT 
-              COUNT(*) *>AS ALIVEFEMALE 
-              FROM CITIZENS 
-              WHERE ALIVE = 'A'
-              AND GENDER = 'F' 
-              AND (YEAR(BDATE) 
-              BETWEEN 
-              YEAR(:WS-QDATE-LOWER-DB2) 
+              GENDER = :WS-QREC01-GENDER 
               AND 
-              YEAR(:WS-QDATE-UPPER-DB2))  
-              FOR FETCH ONLY 
-           END-EXEC. 
-      *----------------------------------------------------------------        
-           EXEC SQL 
-              DECLARE CRS2003 CURSOR FOR 
-              SELECT 
-              COUNT(*) *>AS DEADMALE 
-              FROM CITIZENS 
-              WHERE ALIVE = 'D' 
-              AND GENDER = 'M' 
-              AND (YEAR(BDATE) 
+              YEAR(BDATE) 
               BETWEEN 
-              YEAR(:WS-QDATE-LOWER-DB2) 
+              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+              WS-QINTERVAL-DECIMAL YEARS 
               AND 
-              YEAR(:WS-QDATE-UPPER-DB2)) 
-              FOR FETCH ONLY 
-           END-EXEC. 
-      *----------------------------------------------------------------        
-           EXEC SQL 
-              DECLARE CRS2004 CURSOR FOR 
-              SELECT 
-              COUNT(*) *>AS DEADFEMALE
-              FROM CITIZENS 
-              WHERE ALIVE = 'D' 
-              AND GENDER = 'F' 
-              AND (YEAR(BDATE) 
-              BETWEEN 
-              YEAR(:WS-QDATE-LOWER-DB2) 
-              AND 
-              YEAR(:WS-QDATE-UPPER-DB2)) 
+              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+              WS-QINTERVAL-DECIMAL YEARS 
+              GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
            END-EXEC. 
       ******************************************************************
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
-           EXEC SQL 
-              DECLARE CRS2005 CURSOR FOR 
-              SELECT 
-      * TODO: FINISH IT LATER        
-              YEAR(BDATE), COUNT(*) *>AS NQGLOBAL
-              FROM CITIZENS 
-              WHERE ALIVE = :WS-QALIVE  
-              AND GENDER  = :WS-QGENDER  
-              AND (MONTH(BDATE) 
-              BETWEEN 
-              MONTH(:XX) *> IMPL. TABLE FOR 27 NAKSHATRAS M/D RANGE
-              AND 
-              MONTH(:XX-UPPER)) *> INT BETWEEN 1-12
-              AND (DAY(BDATE)
-              BETWEEN
-              DAY(:YY) *> INT BETWEEN 1-31
-              AND
-              DAY(:YY-UPPER))
-              GROUP BY YEAR(BDATE) 
-              FOR FETCH ONLY 
-           END-EXEC. 
-      *----------------------------------------------------------------
+      
+      * ---------------------------------------------------------------
 
 
       ******************************************************************
@@ -277,8 +253,8 @@
          10 FILLER                 PIC   X(40) VALUES ALL '@'.
       *
          10 RECV01-USER            PIC   X(8).  
-         10 RECV01-CURRENT-DATE-DB2    PIC   X(10).           
-         10 RECV01-INTERVAL-VAL    PIC   S9(3).  
+      *   10 RECV01-CURRENT-DATE-DB2    PIC   X(10).           
+         10 RECV01-INTERVAL-VAL    PIC   S999 COMP-3 VALUE 10. 
          10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
 
       ******************************************************************        
@@ -307,7 +283,7 @@
          05 WS-PGM-ARGS.
            15 WS-PGM-MODE                 PIC   AA. *> 'SQ','MQ' OR 'DS'
            15 WS-PGM-SEPARATOR            PIC   X VALUE ','.
-           15 WS-PGM-INTERVAL-VAL         PIC   S9(3).
+           15 WS-PGM-INTERVAL-VAL         PIC   S999 COMP-3 VALUE 10.
            88 WS-PGM-PASS VALUES ARE 01 THRU 120.
          05 WS-PGM-RESULT                 PIC   S9(3).
          05 WS-PGM-REMINDER               PIC   S9(3).
@@ -424,25 +400,16 @@
       *    PARAGRAPH SQL DATE DB2
       ******************************************************************
        PARA-SQL-DATE-DB2. 
-
            EXEC SQL
-              OPEN CRS2 
-           END-EXEC.  
-           
-           SET INDEX-QDATE TO 1 
-           PERFORM 2 TIMES 
-      * FETCH QUERY 
+              OPEN CRS1
+           END-EXEC. 
            EXEC SQL
-           FETCH CRS2 INTO 
-              :WS-QDATE-CURRENT-DB2(INDEX-QDATE) 
+           FETCH CRS1 INTO 
+              :WS-QREC01-DATE-LOWER 
            END-EXEC 
-
            EVALUATE SQLCODE 
-              WHEN ZERO 
-              *> TODO FIX MOVE BELOW
-           MOVE WS-QDATE-CURRENT-DB2(1) TO RECV01-CURRENT-DATE-DB2 
-           MOVE WS-QDATE-CURRENT-DB2(2) TO WS-QDATE-UPPER-DB2
-                       
+            WHEN ZERO 
+           MOVE RECV01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
       ******************************************************************
       *THIS PART OF CODE IS NOT NEEDED
       * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
@@ -460,7 +427,7 @@
       *     END-IF
       * END CHECKING DB2 DATE FORMAT  
       ******************************************************************        
-              WHEN OTHER
+             WHEN OTHER
       ************** DB2 Error Handling Routine
            DISPLAY '*************************************************'
            DISPLAY '**** E R R O R M E S S A G E S ****'
@@ -473,40 +440,56 @@
            CALL "CEE3ABD" USING ABEND-CODE , TIMING           
            END-EVALUATE
       *
-           MOVE RECV01-INTERVAL-VAL TO WS-QDATE-TMP
-           SET INDEX-QDATE UP BY 1
-           END-PERFORM
-
+           EXEC SQL
+              CLOSE CRS1
+           END-EXEC.
+      * ---------------------------------------------------------------  
+           EXEC SQL
+              OPEN CRS2
+           END-EXEC. 
+                EXEC SQL
+           FETCH CRS2 INTO 
+              :WS-QREC01-DATE-UPPER 
+           END-EXEC       
+      *TODO RC CHECK     
            EXEC SQL
               CLOSE CRS2
-           END-EXEC.  
+           END-EXEC.
+      * ---------------------------------------------------------------     
+           EXEC SQL
+              OPEN CRS3
+           END-EXEC. 
+           EXEC SQL
+           FETCH CRS3 INTO 
+              :WS-QREC01-DATE-UPPER-I 
+           END-EXEC 
+      *TODO RC CHECK
+           EXEC SQL
+              CLOSE CRS3
+           END-EXEC.
+      ******************************************************************
            EXIT.
       ******************************************************************
       *    PARAGRAPH SQL SQ     
       ******************************************************************     
        PARA-SQL-SQ.    
            EXEC SQL
-              OPEN CRS1
+              OPEN CRS1001
            END-EXEC.
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
            SET I TO 1 
            MOVE RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL *> NEEDED?
-           *>SETS PROPER DATE FOR QUERY
-           MOVE RECV01-CURRENT-DATE-DB2 TO WS-QDATE-UPPER-DB2
-           *> TODO: ADD RECV01-INTERVAL-VAL AS DATE TO UPPER-DB2
-           *> AS ANOTHER QUERY NEXT TO CURRENT DATE + INTERV. YEARS
-           MOVE RECV01-CURRENT-DATE-DB2 TO WS-QDATE-LOWER-DB2
            PERFORM RECV01-INTERVAL-COUNT TIMES 
       ******************************************************************
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
-           EXEC SQL
-           FETCH CRS1 
+           EXEC SQL 
+           FETCH CRS1001 
            INTO 
-              :WS-QBDATE, 
-              :WS-QGENDER, 
-              :WS-QALIVE 
+              :WS-QREC01-SQ-DATE, 
+              :WS-QREC01-GENDER, 
+              :WS-QREC01-ALIVE 
             END-EXEC 
 
            IF (SQLCODE NOT = 0 AND 100) THEN
@@ -524,43 +507,56 @@
       ******************************************************************
       * COMPUTES NAKSHATRA 
       ******************************************************************
-           PERFORM PARA-NAKSHATRA-COMPUTE
+           PERFORM PARA-NAKSHATRA-COMPUTE *>TODO
            END-PERFORM
 
       ******************************************************************        
            ADD RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL
-           MOVE WS-PGM-INTERVAL-VAL TO WS-QINTERVAL
+           MOVE WS-PGM-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
            SET I UP BY 1 
            END-PERFORM 
 
            EXEC SQL
-              CLOSE CRS1
+              CLOSE CRS1001
            END-EXEC.   
            EXIT.
       ******************************************************************
        PARA-SQL-MQ. *> EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
       ******************************************************************
       *     PERFORM  *> TODO
+           EXEC SQL 
+            OPEN CRS2001 
+           END-EXEC. 
+      *     
            PERFORM
             VARYING WS-SQL-MQ-I
             FROM RECV01-INTERVAL-COUNT BY RECV01-INTERVAL-COUNT
             UNTIL WS-SQL-MQ-I > 120
               *>TODO
       ******************************************************************
-      *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS
-      *    TOTAL CITIZENS COUNT
-
-
+      *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
+      *    TOTAL CITIZENS COUNT 
       ******************************************************************
-           
+           EXEC SQL 
+            FETCH CRS2001 INTO 
+            :WS-QREC01-MQ-YEAR, 
+            :WS-QREC01-MQ-NR 
+           END-EXEC 
+      *TODO RC CHECK   
+
+
+      *    TODO MOVE TO RECV01 
 
 
            END-PERFORM 
+           EXEC SQL
+            CLOSE CRS2001
+           END-EXEC.
            EXIT.
       ******************************************************************
        PARA-NAKSHATRA-COMPUTE.
       ****************************************************************** 
-      *
+      *    TODO !
       ******************************************************************
               *> WS-QBDATE
               *> WS-QGENDER
@@ -568,16 +564,16 @@
       *EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
       ******************************************************************
-           EVALUATE WS-QALIVE
+           EVALUATE WS-QREC01-ALIVE
               WHEN 'A'
-           EVALUATE WS-QGENDER
+           EVALUATE WS-QREC01-GENDER
               WHEN 'M'
               COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1
               WHEN 'F'
               COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1
            END-EVALUATE 
               WHEN 'D' *> DEAD
-           EVALUATE WS-QGENDER
+           EVALUATE WS-QREC01-GENDER
               WHEN 'M'
               COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1
               WHEN 'F'
