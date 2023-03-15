@@ -104,7 +104,7 @@
         05 RECV01-DS-R-HEADER.
          07 RECV01-DS-R-LEN. *>TODO
         05 RECV01-DS--RTABLE-STATS.
-        *> HERE MAY BE MORE RTABLE-STATS FROM 1- 120
+        *> HERE MAY BE MORE RTABLE-STATS FROM 1-120
         05 RECV01-DS-R-SUMMARY.
        WORKING-STORAGE SECTION.
       ******************************************************************
@@ -113,7 +113,7 @@
            EXEC SQL  
               INCLUDE SQLCA  
            END-EXEC. 
-      ******************************************************************
+      * ---------------------------------------------------------------
            EXEC SQL BEGIN DECLARE SECTION
            END-EXEC. 
        01 WS-QREC01. 
@@ -233,7 +233,7 @@
 
 
       ******************************************************************
-      *  END OF SQL VARIABLES & STRUCTURES
+      *    END OF SQL VARIABLES & STRUCTURES
       ****************************************************************** 
       ******************************************************************       
       *    RECORDS RELATED WITH FD AND RECORDS INSIDE DATASET
@@ -258,7 +258,8 @@
          10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
 
       * ---------------------------------------------------------------        
-      * CHECK IT 05 date1 FORMAT DATE "%m/%d/@Y".          
+      * CHECK 05 date1 FORMAT DATE "%m/%d/@Y".       
+      * ---------------------------------------------------------------
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
                        RECV01-INTERVAL-COUNT INDEXED BY I.
@@ -281,7 +282,8 @@
          10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
          10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
       * ---------------------------------------------------------------        
-      * THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
+      *    THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
+      * ---------------------------------------------------------------
        01 WS-PGM-INPUT.
          05 WS-PGM-ARGS.
            15 WS-PGM-MODE                 PIC   AA. *> 'SQ','MQ','DS'
@@ -304,15 +306,15 @@
        01 WS-SQL-MQ.
         05 WS-SQL-MQ-I                PIC   S9(3).
       ******************************************************************
-      * VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
+      *    VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
         05 WS-MONTH-DAY               PIC   9(4).  
       ******************************************************************
-      * FS
+      *    FS
        01 WS-EOF-FLAG                 PIC   A.
       ******************************************************************
-      * FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
+      *    FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC   S9(9) BINARY.
        01  TIMING                     PIC   S9(9) BINARY.
       ******************************************************************
@@ -326,9 +328,9 @@
       *    PROCEDURE DIVISION
       ******************************************************************
        PROCEDURE DIVISION USING PARM-BUFFER, LK-FS-W, LK-FS-R. 
-      ******************************************************************
+      * ---------------------------------------------------------------
       *    ARGS CHECKING COMPLETE
-      ******************************************************************
+      * ---------------------------------------------------------------
            EVALUATE PARM-LENGTH ALSO PARM-DATA(1:2) 
            WHEN 2 ALSO 'DS' 
             PERFORM PARA-READ-FROM-DATASET 
@@ -356,11 +358,11 @@
             DISPLAY ' NOTHING TO DO... SORRY. EXITS PGM' 
             MOVE 2 TO RETURN-CODE 
            END-EVALUATE   
-      ******************************************************************
+      * ---------------------------------------------------------------
       D    DISPLAY 'DEBUG: RC=', RETURN-CODE
            STOP RUN.
       ******************************************************************
-      * STOP RUN PGM
+      *    STOP RUN PGM
       ******************************************************************
        PARA-VALIDATE-ARGS.
       ******************************************************************
@@ -376,17 +378,19 @@
               'AUTO COMPLEMENT INTERVAL SET TO 10'
             MOVE 2 TO RETURN-CODE  
            END-IF
-      * ---------------------------------     
+      * ---------------------------------------------------------------    
+      *    TAKES SOME INFO FROM OS TO PRINT IN SUMMARY VIEW
+      * ---------------------------------------------------------------
            ACCEPT RECV01-PGM-START-DATE FROM DATE YYYYMMDD
            ACCEPT RECV01-USER           FROM USERNAME
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
       D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
       D             'USER, CURRENT DATE'            
-      ******************************************************************
+      * ---------------------------------------------------------------
       *    CHANGE VAL FROM JCL (1-120) TO PROPER FOR TAB OCCURS  
       *    DIVIDE 120 BY INTERVAL-VAL  
       *    CHECKING OF CORRECTIVNESS FOR DIVIDE
-      ******************************************************************
+      * ---------------------------------------------------------------
            PERFORM UNTIL WS-PGM-REMINDER = 0
            DIVIDE 120 BY WS-PGM-INTERVAL-VAL 
            GIVING WS-PGM-RESULT REMAINDER WS-PGM-REMINDER
@@ -405,6 +409,7 @@
            EXEC SQL
               OPEN CRS1
            END-EXEC. 
+      *     
            EXEC SQL
            FETCH CRS1 INTO 
               :WS-QREC01-DATE-LOWER 
@@ -412,34 +417,8 @@
            EVALUATE SQLCODE 
             WHEN ZERO 
            MOVE RECV01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
-      ******************************************************************
-      *THIS PART OF CODE IS NOT NEEDED
-      * WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
-      *     IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
-      *        *> YYYY/MM/DD
-      *        DISPLAY 'TEST'
-      *     ELSE 
-      *        IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
-      *           *> MM/DD/YYYY
-      *           DISPLAY 'TESY'
-      *        ELSE
-      *           *> MM/DD/YYY
-      *           DISPLAY 'TEST'
-      *        END-IF
-      *     END-IF
-      * END CHECKING DB2 DATE FORMAT  
-      ******************************************************************        
-             WHEN OTHER
-      ************** DB2 Error Handling Routine
-           DISPLAY '*************************************************'
-           DISPLAY '**** E R R O R M E S S A G E S ****'
-           DISPLAY '*************************************************'
-           DISPLAY '* Problem in paragraph: ' *>ws-paragraph
-           DISPLAY '* Problem-msg: ' *>ws-error-msg
-           DISPLAY '*'
-           DISPLAY '* SQLCODE: ' SQLCODE
-           DISPLAY '*************************************************'
-           CALL "CEE3ABD" USING ABEND-CODE , TIMING           
+           WHEN OTHER
+            PERFORM PARA-SQL-ERROR-CHECK 
            END-EVALUATE
       *
            EXEC SQL
@@ -449,11 +428,18 @@
            EXEC SQL
               OPEN CRS2
            END-EXEC. 
-                EXEC SQL
+      *     
+           EXEC SQL
            FETCH CRS2 INTO 
               :WS-QREC01-DATE-UPPER 
-           END-EXEC       
-      *TODO RC CHECK     
+           END-EXEC        
+           EVALUATE SQLCODE 
+            WHEN ZERO 
+           *>TODO
+           WHEN OTHER
+            PERFORM PARA-SQL-ERROR-CHECK 
+           END-EVALUATE
+      *
            EXEC SQL
               CLOSE CRS2
            END-EXEC.
@@ -461,11 +447,18 @@
            EXEC SQL
               OPEN CRS3
            END-EXEC. 
+      *
            EXEC SQL
            FETCH CRS3 INTO 
               :WS-QREC01-DATE-UPPER-I 
            END-EXEC 
-      *TODO RC CHECK
+           EVALUATE SQLCODE 
+            WHEN ZERO 
+           *>TODO
+           WHEN OTHER
+            PERFORM PARA-SQL-ERROR-CHECK 
+           END-EVALUATE
+      *
            EXEC SQL
               CLOSE CRS3
            END-EXEC.
@@ -495,19 +488,10 @@
             END-EXEC 
 
            IF (SQLCODE NOT = 0 AND 100) THEN
-      ************** DB2 Error Handling Routine
-           DISPLAY '*************************************************'
-           DISPLAY '**** E R R O R M E S S A G E S ****'
-           DISPLAY '*************************************************'
-           DISPLAY '* Problem in paragraph: ' *>ws-paragraph
-           DISPLAY '* Problem-msg: ' *>ws-error-msg
-           DISPLAY '*'
-           DISPLAY '* SQLCODE: ' SQLCODE
-           DISPLAY '*************************************************'
-           CALL "CEE3ABD" USING ABEND-CODE , TIMING
+           PERFORM PARA-SQL-ERROR-CHECK 
            END-IF 
       ******************************************************************
-      * COMPUTES NAKSHATRA 
+      *    COMPUTES NAKSHATRA 
       ******************************************************************
            PERFORM PARA-NAKSHATRA-COMPUTE *>TODO
            END-PERFORM
@@ -523,7 +507,9 @@
            END-EXEC.   
            EXIT.
       ******************************************************************
-       PARA-SQL-MQ. *> EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
+       PARA-SQL-MQ. 
+      ******************************************************************
+      *    EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
       ******************************************************************
       *     PERFORM  *> TODO
            EXEC SQL 
@@ -544,13 +530,14 @@
             :WS-QREC01-MQ-YEAR, 
             :WS-QREC01-MQ-NR 
            END-EXEC 
-      *TODO RC CHECK   
-
-
+      *    RC CHECK   
+           IF (SQLCODE NOT = 0 AND 100) THEN
+           PERFORM PARA-SQL-ERROR-CHECK 
+           END-IF 
       *    TODO MOVE TO RECV01 
 
-
            END-PERFORM 
+      *     
            EXEC SQL
             CLOSE CRS2001
            END-EXEC.
@@ -723,7 +710,7 @@
       ******************************************************************
       *    TABLE STATISTICS AND % VIEW
       ****************************************************************** 
-      *LOOP FOR TABLES PRINT
+      *    LOOP FOR TABLES PRINT
       ******************************************************************
            PERFORM RECV01-INTERVAL-COUNT TIMES 
            DISPLAY RECV01-HLINE 
@@ -732,7 +719,7 @@
            DISPLAY RECV01-HLINE 
            COMPUTE WS-TAB-COUNTER = WS-TAB-COUNTER + 1
       ******************************************************************     
-      *PART FOR SUMMARY
+      *    PART FOR SUMMARY
       ******************************************************************
            ADD RECV01-FEMALE(1) RECV01-MALE(1) *> ALIVE
                RECV01-FEMALE(2) RECV01-MALE(2) *> DEAD
@@ -740,7 +727,7 @@
            ON SIZE ERROR DISPLAY 'PANIC: ',
            'PIC CLAUSE RECV01-S-TOTAL-CP ',
            'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
-      ******************************************************************
+      * ---------------------------------------------------------------
            SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
            FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
            DISPLAY RECV01-HLINE
@@ -821,3 +808,34 @@
            END-PERFORM 
            CLOSE RECLOGR 
            EXIT. 
+      ******************************************************************    
+       PARA-SQL-ERROR-CHECK.
+      ************** DB2 Error Handling Routine
+           DISPLAY '*************************************************'
+           DISPLAY '**** E R R O R M E S S A G E S ****'
+           DISPLAY '*************************************************'
+           DISPLAY '* Problem in paragraph: ' *>ws-paragraph
+           DISPLAY '* Problem-msg: ' *>ws-error-msg
+           DISPLAY '*'
+           DISPLAY '* SQLCODE: ' SQLCODE
+           DISPLAY '*************************************************'
+           CALL "CEE3ABD" USING ABEND-CODE , TIMING    
+           EXIT.
+
+      ******************************************************************
+      *    THIS PART OF CODE IS NOT NEEDED
+      *    WE TAKE CURRENT DATE STRAIGHT FROM DB2 NOT BY ZOS SERVICE
+      *     IF WS-DB2-DATE-FORMAT(5:1) = '-' THEN
+      *        *> YYYY/MM/DD
+      *        DISPLAY 'TEST'
+      *     ELSE 
+      *        IF WS-DB2-DATE-FORMAT(3:1) = '/' THEN
+      *           *> MM/DD/YYYY
+      *           DISPLAY 'TESY'
+      *        ELSE
+      *           *> MM/DD/YYY
+      *           DISPLAY 'TEST'
+      *        END-IF
+      *     END-IF
+      *    END CHECKING DB2 DATE FORMAT  
+      ******************************************************************
