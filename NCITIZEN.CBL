@@ -216,7 +216,7 @@
       *    A,M A,F D,M D,F
       * ---------------------------------------------------------------
            EXEC SQL 
-              DECLARE MQ01 CURSOR FOR 
+              DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
               SELECT 
               YEAR(BDATE), COUNT(*) *>AS NR 
               FROM CITIZENS 
@@ -532,14 +532,16 @@
       *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
       ******************************************************************
+           PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-            FETCH MQ01 INTO 
-            :WS-QREC01-MQ-YEAR, 
-            :WS-QREC01-MQ-NR 
+            FETCH NEXT ROWSET FROM MQ01 FOR 121 ROWS INTO 
+            :WS-0QREC01-MQ-ROWSET-BDATE, 
+            :WS-0QREC01-MQ-ROWSET-NR 
            END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
       *    TODO MOVE TO RECV01 
 
+           END-PERFORM 
            END-PERFORM 
       *     
            EXEC SQL
