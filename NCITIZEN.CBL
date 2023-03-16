@@ -345,8 +345,8 @@
       *    VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
-        05 WS-MONTH-DAY               PIC   9(4).  
-       01 WS-NC-FLAG                  PIC   S9(3) COMP-5.
+        05 WS-MONTH-DAY               PIC   S9(08) COMP. 
+       01 WS-NC-FLAG                  PIC   S9(3)  COMP-5.
       ******************************************************************
       *    FS
        01 WS-EOF-FLAG                 PIC   A.
@@ -652,7 +652,9 @@
              WS-NC-FLAG 
            END-EVALUATE      
       * ---------------------------------------------------------------
-      * TODO REBUILD CODE BELOW : FROM SUBSCRIPT TO INDEX  
+      * TODO: REBUILD LEGACY CODE BELOW : FROM SUBSCRIPT TO INDEX  
+           COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100
+           COMPUTE WS-MONTH-DAY = WS-MONTH-DAY + WS-QREC01-SQ-ROWSET-D
            EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
               WHEN 0413 
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
