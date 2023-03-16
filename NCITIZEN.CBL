@@ -138,9 +138,9 @@
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         10 WS0QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES. 
-         10 WS0QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES. 
-         10 WS0QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES.          
+         10 WS-QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES. 
+         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES. 
+         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES.          
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
@@ -148,6 +148,9 @@
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
          07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP-5.
          07 WS-QREC01-MQ-NR              PIC   S9(9)  COMP-5.
+        05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
+         07 WS-0QREC01-MQ-ROWSET-BDATE   PIC X(10) OCCURS 121 TIMES.
+         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(9) COMP-5 OCCURS 121 TIMES.        
       * ---------------------------------------------------------------
            EXEC SQL END DECLARE SECTION 
            END-EXEC. 
@@ -487,9 +490,9 @@
            EXEC SQL 
            FETCH NEXT ROWSET FROM SQ01 FOR 2000 ROWS 
            INTO 
-           :WS0QREC01-SQ-ROWSET-BDATE, 
-           :WS0QREC01-SQ-ROWSET-GENDER, 
-           :WS0QREC01-SQ-ROWSET-ALIVE 
+           :WS-QREC01-SQ-ROWSET-BDATE, 
+           :WS-QREC01-SQ-ROWSET-GENDER, 
+           :WS-QREC01-SQ-ROWSET-ALIVE 
            END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
       ******************************************************************
