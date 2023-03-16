@@ -127,7 +127,7 @@
       * ---------------------------------------------------------------   
          07 WS-QREC01-GENDER              PIC   X. *> DB2 CHAR  
          88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
-         88 WS-QREC01-DENDER-FLAG-FEMALE  VALUE 'F'. 
+         88 WS-QREC01-GENDER-FLAG-FEMALE  VALUE 'F'. 
       * ---------------------------------------------------------------  
          07 WS-QREC01-ALIVE               PIC   X. *> DB2 CHAR 
          88 WS-QREC01-ALIVE-FLAG-ALIVE    VALUE 'A'. 
@@ -138,9 +138,12 @@
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         10 WS-QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES. 
-         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES. 
-         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES.          
+         10 WS-QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES
+                                                   INDEXED BY INX-SQ-D. 
+         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES
+                                                   INDEXED BY INX-SQ-G.  
+         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES
+                                                   INDEXED BY INX-SQ-A.         
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
@@ -149,8 +152,10 @@
          07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP-5.
          07 WS-QREC01-MQ-NR              PIC   S9(9)  COMP-5.
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         07 WS-0QREC01-MQ-ROWSET-BDATE   PIC X(10) OCCURS 121 TIMES.
-         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(9) COMP-5 OCCURS 121 TIMES.        
+         07 WS-0QREC01-MQ-ROWSET-BDATE   PIC X(10) OCCURS 121 TIMES
+                                                   INDEXED BY INX-MQ-D. 
+         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(9) COMP-5 OCCURS 121 TIMES
+                                                   INDEXED BY INX-MQ-N.         
       * ---------------------------------------------------------------
            EXEC SQL END DECLARE SECTION 
            END-EXEC. 
@@ -311,6 +316,8 @@
       *      15 WS-W-YEAR                   PIC   9(4).
       *      15 WS-W-MONTH                  PIC   99.
       *      15 WS-W-DAY                    PIC   99.
+       01 WS-SQ-COMMON.
+        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 2000. *>SQ TABLE L
       ******************************************************************
       *    VARIABLES FOR PARA-SQL-MQ.
       ******************************************************************
@@ -321,6 +328,7 @@
       ******************************************************************
        01 WS-STATS.
         05 WS-MONTH-DAY               PIC   9(4).  
+       01 WS-NC-FLAG                  PIC   S9(3) COMP-5.
       ******************************************************************
       *    FS
        01 WS-EOF-FLAG                 PIC   A.
@@ -553,37 +561,70 @@
        PARA-NAKSHATRA-COMPUTE.
       ****************************************************************** 
       *    TODO !
+      *    BECAUSE OF 2 DIFFERENT MODES (SQ & MQ) WE NEED 2 TYPES OF
+      *    RECORDS AND DIFFERENT PROCEEDING WAYS
       ******************************************************************
               *> WS-QBDATE
               *> WS-QGENDER
               *> WS-QALIVE
       *    EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
-      ******************************************************************
-           
+      ******************************************************************        
            *>TODO:
            *> LEGACY CODE MODIFY IT FOR ROWSET SUPPORT TOMORROW
            *> MOVE TO LOOP FOR ARRAY_2000 !
-           EVALUATE TRUE 
-           WHEN WS-QREC01-ALIVE-FLAG-ALIVE 
-            EVALUATE TRUE 
-              WHEN WS-QREC01-GENDER-FLAG-MALE 
-              COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1
-              WHEN WS-QREC01-DENDER-FLAG-FEMALE 
-              COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1
-            END-EVALUATE 
-           WHEN WS-QREC01-ALIVE-FLAG-DEAD 
-            EVALUATE TRUE 
-              WHEN WS-QREC01-GENDER-FLAG-MALE 
-              COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1
-              WHEN WS-QREC01-DENDER-FLAG-FEMALE 
-              COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1
-            END-EVALUATE       
-           END-EVALUATE
+           EVALUATE WS-NC-FLAG 
+            WHEN 101   *>SQ01
+      * ---------------------------------------------------------------
+      *    LOOP FOR TABLE_2000 COMPUTATION => RECV01
+      * ---------------------------------------------------------------
+            SET INX-SQ-D TO 1
+            SET INX-SQ-G TO 1
+            SET INX-SQ-A TO 1
+            PERFORM UNTIL EXIT *> WS-SQ-INX01 = 2000 DEC BY 1
+      * -----------------------------------------      
+      *    TODO IMPL QDATE FOR AGE 1 - 120 YEARS
+      *    COMPUTE GOES TO NOT TO 1 VAR BUT TO TABLE_1-120 VARS
+           EVALUATE WS-QREC01-SQ-ROWSET-ALIVE(INX-SQ-A) 
+            WHEN 'A' 
+             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
+              WHEN 'M' 
+              COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1 
+              WHEN 'F' 
+              COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1 
+             END-EVALUATE 
+            WHEN 'D'  
+             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
+              WHEN 'M' 
+              COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1 
+              WHEN 'F' 
+              COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1 
+             END-EVALUATE       
+            END-EVALUATE
+      *---------------------------------
+      *    INDEXES
+           SET INX-SQ-D UP BY 1 
+           SET INX-SQ-G UP BY 1 
+           SET INX-SQ-A UP BY 1 
+      * -----------------------------------------
+            COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
+            IF WS-SQ-INX01 <= 0 THEN 
+            EXIT PERFORM 
+            END-IF 
+            END-PERFORM 
+      * ---------------------------------------------------------------
+            WHEN 201   *>MQ01
+      * ---------------------------------------------------------------      
+            CONTINUE 
+      * ---------------------------------------------------------------
+            WHEN OTHER 
+            DISPLAY 'ERROR: SOMETHING WENT WRONG... WS-NC-FLAG=',
+             WS-NC-FLAG 
+           END-EVALUATE      
       * ---------------------------------------------------------------
            EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
-              WHEN 0413
-                 COMPUTE WS-U(I,27) = WS-U(I,27) + 1
+              WHEN 0413 
+                 COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
               WHEN 0414 THRU 0426
                  COMPUTE WS-N(I,1) = WS-N(I,1) + 1
               WHEN 0427
