@@ -76,18 +76,18 @@
       *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
            RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !
-           DEPENDING ON RECV01-DS-LEN *> TODO IN WS-
+           DEPENDING ON REC01-DS-LEN *> TODO IN WS-
            RECORDING MODE IS V 
-           DATA RECORD IS RECV01-DS.
+           DATA RECORD IS REC01-DS.
       ******************************************************************
-       01 RECV01-DS. 
+       01 REC01-DS. 
       ******************************************************************       
       * TODO: BINARY FORM OF DATA INSIDE THE STRUCTURE
       ******************************************************************
-        05 RECV01-DS-HEADER.
-         07 RECV01-DS-LEN. *>TODO
-        05 RECV01-DS-TABLE-STATS.
-        05 RECV01-DS-SUMMARY.
+        05 REC01-DS-HEADER.
+         07 REC01-DS-LEN. *>TODO
+        05 REC01-DS-TABLE-STATS.
+        05 REC01-DS-SUMMARY.
 
       ******************************************************************      
        FD RECLOGR    
@@ -96,16 +96,16 @@
       *    WHEN RECV01 IS COMPLETED CHECK RECORD LENGTH MIN & MAX
       *    AND CHANGE VALUES 100 AND 900 TO NEW, PROPER ONES      
            RECORD IS VARYING IN SIZE FROM 100 to 900 *>CHANGE RANGE !
-           DEPENDING ON RECV01-DS-R-LEN *> TODO IN WS-
+           DEPENDING ON REC01-DS-R-LEN *> TODO IN WS-
            RECORDING MODE IS V 
-           DATA RECORD IS RECV01-DS-R. 
+           DATA RECORD IS REC01-DS-R. 
       * ----------------------------------------------------------------
-       01 RECV01-DS-R. 
-        05 RECV01-DS-R-HEADER.
-         07 RECV01-DS-R-LEN. *>TODO
-        05 RECV01-DS--RTABLE-STATS.
+       01 REC01-DS-R. 
+        05 REC01-DS-R-HEADER.
+         07 REC01-DS-R-LEN. *>TODO
+        05 REC01-DS--RTABLE-STATS.
         *> HERE MAY BE MORE RTABLE-STATS FROM 1-120
-        05 RECV01-DS-R-SUMMARY.
+        05 REC01-DS-R-SUMMARY.
        WORKING-STORAGE SECTION.
       ******************************************************************
       *  BEGIN SQL VARIABLES & STRUCTURES
@@ -138,11 +138,15 @@
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         10 WS-QREC01-SQ-ROWSET-BDATE    PIC X(10) OCCURS 2000 TIMES
-                                                   INDEXED BY INX-SQ-D. 
-         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2000 TIMES
+         10 WS-QREC01-SQ-ROWSET-Y        PIC S9(08) COMP *>INT DB2
+               OCCURS 1200 TIMES INDEXED BY INX-SQ-Y. 
+         10 WS-QREC01-SQ-ROWSET-M        PIC S9(08) COMP *>INT DB2
+               OCCURS 1200 TIMES INDEXED BY INX-SQ-M. 
+         10 WS-QREC01-SQ-ROWSET-D        PIC S9(08) COMP *>INT DB2
+               OCCURS 1200 TIMES INDEXED BY INX-SQ-D. 
+         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 1200 TIMES
                                                    INDEXED BY INX-SQ-G.  
-         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2000 TIMES
+         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 1200 TIMES
                                                    INDEXED BY INX-SQ-A.         
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
@@ -152,10 +156,10 @@
          07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP-5.
          07 WS-QREC01-MQ-NR              PIC   S9(9)  COMP-5.
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         07 WS-0QREC01-MQ-ROWSET-BDATE   PIC X(10) OCCURS 121 TIMES
-                                                   INDEXED BY INX-MQ-D. 
-         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(9) COMP-5 OCCURS 121 TIMES
-                                                   INDEXED BY INX-MQ-N.         
+         07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(08) COMP *>INT DB2
+               OCCURS 121 TIMES INDEXED BY INX-MQ-D. 
+         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(08) COMP *>INT DB2
+               OCCURS 121 TIMES INDEXED BY INX-MQ-N.         
       * ---------------------------------------------------------------
            EXEC SQL END DECLARE SECTION 
            END-EXEC. 
@@ -198,7 +202,9 @@
            EXEC SQL 
               DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
-              BDATE, 
+              YEAR(BDATE), 
+              MONTH(BDATE),
+              DAY(BDATE),
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -222,8 +228,8 @@
       * ---------------------------------------------------------------
            EXEC SQL 
               DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
-              SELECT 
-              YEAR(BDATE), COUNT(*) *>AS NR 
+              SELECT *> FOR GLOBAL COUNT_BIG()
+              YEAR(BDATE), COUNT(YEAR(BDATE)) *>AS NR 
               FROM CITIZENS 
               WHERE 
               ALIVE = :WS-QREC01-ALIVE 
@@ -288,11 +294,11 @@
           20 REC01-NTAB-AGE OCCURS 120 TIMES INDEXED BY INX-AGE. 
       *     25 REC01-NTAB-AGE      PIC 9(9) COMP-5. 
       *     25 REC01-NTAB-AGE-U    PIC 9(9) COMP-5. 
-          23 REC01-NTAB-CITIZEN OCCURS 2 TIMES INDEXED BY INX-AC. 
+          23 REC01-NTAB-CITIZEN OCCURS 2 TIMES. *> INDEXED BY INX-AC. 
           *> 1-ALIVE,2-DEAD
            25 REC01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
            25 REC01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
-          23 REC01-NTAB-UNKNOWN OCCURS 2 TIMES INDEXED BY INX-AU. 
+          23 REC01-NTAB-UNKNOWN OCCURS 2 TIMES. *> INDEXED BY INX-AU. 
           *> 1-ALIVE,2-DEAD
            25 REC01-NTAB-UNKNOWN-MALE   PIC 9(9) COMP-5. 
            25 REC01-NTAB-UNKNOWN-FEMALE PIC 9(9) COMP-5. 
@@ -329,7 +335,7 @@
       *      15 WS-W-MONTH                  PIC   99.
       *      15 WS-W-DAY                    PIC   99.
        01 WS-SQ-COMMON.
-        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 2000. *>SQ TABLE L
+        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 1200. *>SQ TABLE L
       ******************************************************************
       *    VARIABLES FOR PARA-SQL-MQ.
       ******************************************************************
@@ -508,11 +514,13 @@
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-           FETCH NEXT ROWSET FROM SQ01 FOR 2000 ROWS 
+           FETCH NEXT ROWSET FROM SQ01 FOR 1200 ROWS 
            INTO 
-           :WS-QREC01-SQ-ROWSET-BDATE, 
-           :WS-QREC01-SQ-ROWSET-GENDER, 
-           :WS-QREC01-SQ-ROWSET-ALIVE 
+           :WS-QREC01-SQ-ROWSET-Y, *>INT 4 BYTES DB2
+           :WS-QREC01-SQ-ROWSET-M, *>INT 4 BYTES DB2
+           :WS-QREC01-SQ-ROWSET-D, *>INT 4 BYTES DB2
+           :WS-QREC01-SQ-ROWSET-GENDER, *> CHAR DB2
+           :WS-QREC01-SQ-ROWSET-ALIVE *> CHAR DB2
            END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
       ******************************************************************
@@ -542,7 +550,7 @@
             OPEN MQ01 
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
-      *     
+      * ---------------------------------------------------------------    
            PERFORM
             VARYING WS-SQL-MQ-I
             FROM REC01-INTERVAL-COUNT BY REC01-INTERVAL-COUNT
@@ -552,18 +560,21 @@
       *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
       ******************************************************************
-           PERFORM UNTIL SQLCODE = 100 
+            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
             FETCH NEXT ROWSET FROM MQ01 FOR 121 ROWS INTO 
-            :WS-0QREC01-MQ-ROWSET-BDATE, 
+            :WS-0QREC01-MQ-ROWSET-Y, 
             :WS-0QREC01-MQ-ROWSET-NR 
            END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
       *    TODO MOVE TO RECV01 
-
+      *----------------
+           
+      *----------------
+            END-PERFORM 
+      *      
            END-PERFORM 
-           END-PERFORM 
-      *     
+      * ---------------------------------------------------------------
            EXEC SQL
             CLOSE MQ01
            END-EXEC.
@@ -641,6 +652,7 @@
              WS-NC-FLAG 
            END-EVALUATE      
       * ---------------------------------------------------------------
+      * TODO REBUILD CODE BELOW : FROM SUBSCRIPT TO INDEX  
            EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
               WHEN 0413 
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
@@ -863,8 +875,8 @@
            DISPLAY 'INFO:    ',
            'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
            END-EVALUATE
-           MOVE REC01 TO RECV01-DS
-           WRITE RECV01-DS
+           MOVE REC01 TO REC01-DS
+           WRITE REC01-DS
            END-WRITE.
            CLOSE RECLOGW.
            EXIT.
@@ -873,11 +885,11 @@
        PARA-READ-FROM-DATASET. 
            OPEN INPUT RECLOGR 
            PERFORM UNTIL WS-EOF-FLAG = 'Y' 
-           READ RECV01-DS-R INTO REC01 
+           READ REC01-DS-R INTO REC01 
            AT END 
            MOVE 'Y' TO WS-EOF-FLAG 
            NOT AT END 
-           MOVE RECV01-DS-R TO REC01 *>CHANGE TO REC-LENGTH FOR V
+           MOVE REC01-DS-R TO REC01 *>CHANGE TO REC-LENGTH FOR V
            *>CHECK CRC TODO 
            PERFORM PARA-CREATE-VIEW           
            END-READ 
