@@ -153,8 +153,8 @@
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
-         07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP-5.
-         07 WS-QREC01-MQ-NR              PIC   S9(9)  COMP-5.
+         07 WS-QREC01-MQ-YEAR            PIC   S9(8)  COMP.
+         07 WS-QREC01-MQ-NR              PIC   S9(8)  COMP.
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
          07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(08) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-D. 
@@ -341,11 +341,12 @@
       ******************************************************************
        01 WS-SQL-MQ.
         05 WS-SQL-MQ-I                PIC   S9(3).
+        05 WS-Q-DB2-CURRENT-Y         PIC   S9(8) COMP.
       ******************************************************************
       *    VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
-        05 WS-MONTH-DAY               PIC   S9(08) COMP. 
+        05 WS-MONTH-DAY               PIC   S9(8) COMP. 
        01 WS-NC-FLAG                  PIC   S9(3)  COMP-5.
       ******************************************************************
       *    FS
@@ -452,13 +453,9 @@
            FETCH CD01 INTO 
               :WS-QREC01-DATE-LOWER 
            END-EXEC 
-           EVALUATE SQLCODE 
-            WHEN ZERO 
-           MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
-           WHEN OTHER
-            PERFORM PARA-SQL-ERROR-CHECK 
-           END-EVALUATE
-      *
+           PERFORM PARA-SQL-ERROR-CHECK 
+           MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL 
+      *VERIFY
            EXEC SQL
               CLOSE CD01
            END-EXEC.
@@ -474,7 +471,7 @@
               :WS-QREC01-DATE-UPPER 
            END-EXEC        
            PERFORM PARA-SQL-ERROR-CHECK 
-      *
+      *TODO
            EXEC SQL
               CLOSE CD02
            END-EXEC.
@@ -490,7 +487,7 @@
               :WS-QREC01-DATE-UPPER-I 
            END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
-      *
+      *TODO
            EXEC SQL
               CLOSE CD03
            END-EXEC.
@@ -555,7 +552,7 @@
             VARYING WS-SQL-MQ-I
             FROM REC01-INTERVAL-COUNT BY REC01-INTERVAL-COUNT
             UNTIL WS-SQL-MQ-I > 120
-              *>TODO
+              *>TODO NEED PARAM CHANGE E.G. GENDER M OR F
       ******************************************************************
       *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
@@ -567,9 +564,9 @@
             :WS-0QREC01-MQ-ROWSET-NR 
            END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
-      *    TODO MOVE TO RECV01 
+      *    TODO LOOP FOR 121 ROWS TO COUNT
       *----------------
-           
+      *     PERFORM PARA-NAKSHATRA-COMPUTE 
       *----------------
             END-PERFORM 
       *      
@@ -601,61 +598,37 @@
       * ---------------------------------------------------------------
       *    LOOP FOR TABLE_2000 COMPUTATION => RECV01
       * ---------------------------------------------------------------
+            SET INX-SQ-Y TO 1
+            SET INX-SQ-M TO 1
             SET INX-SQ-D TO 1
+            *>
             SET INX-SQ-G TO 1
             SET INX-SQ-A TO 1
             PERFORM UNTIL EXIT *> WS-SQ-INX01 = 2000 DEC BY 1
-      * -----------------------------------------      
+      * ---------------------------------------------------------------      
+      *    CHANGE YEAR OF BIRTH TO AGE FROM VALIDATED RANGE 1-120
+      * ---------------------------------------------------------------
       *    TODO IMPL QDATE FOR AGE 1 - 120 YEARS
       *    COMPUTE GOES TO NOT TO 1 VAR BUT TO TABLE_1-120 VARS
-      *TODO SELECTS PROPER NAKSHATRA AND SETS INDEX FOR IT
-           
-      *TODO INSIDE ONE OF 27 N. PUTS GENDER,ALIVE STATUS
-           EVALUATE WS-QREC01-SQ-ROWSET-ALIVE(INX-SQ-A) 
-            WHEN 'A' 
-             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
-              WHEN 'M' 
-              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) 
-              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) + 1 
-              WHEN 'F' 
-              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) 
-              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) + 1 
-             END-EVALUATE 
-            WHEN 'D'  
-             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
-              WHEN 'M' 
-              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) 
-              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) + 1 
-              WHEN 'F' 
-              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) 
-              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) + 1 
-             END-EVALUATE       
-            END-EVALUATE
-      *---------------------------------
-      *    INDEXES
-           SET INX-SQ-D UP BY 1 
-           SET INX-SQ-G UP BY 1 
-           SET INX-SQ-A UP BY 1 
-      * -----------------------------------------
-            COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
-            IF WS-SQ-INX01 <= 0 THEN 
-            EXIT PERFORM 
-            END-IF 
-            END-PERFORM 
-      * ---------------------------------------------------------------
-            WHEN 201   *>MQ01
-      * ---------------------------------------------------------------      
-            CONTINUE 
-      * ---------------------------------------------------------------
+      *    TODO SELECTS PROPER NAKSHATRA AND SETS INDEX FOR IT
+           SUBTRACT WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) FROM 
+           WS-Q-DB2-CURRENT-Y GIVING WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
+           EVALUATE WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
+            WHEN 1 THRU 120 
+              CONTINUE  
+            WHEN ZERO 
+              MOVE 1 TO WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
             WHEN OTHER 
-            DISPLAY 'ERROR: SOMETHING WENT WRONG... WS-NC-FLAG=',
-             WS-NC-FLAG 
-           END-EVALUATE      
+              MOVE 120 TO WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
+           END-EVALUATE  
       * ---------------------------------------------------------------
-      * TODO: REBUILD LEGACY CODE BELOW : FROM SUBSCRIPT TO INDEX  
-           COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100
-           COMPUTE WS-MONTH-DAY = WS-MONTH-DAY + WS-QREC01-SQ-ROWSET-D
-           EVALUATE WS-MONTH-DAY *>MONTH DAY FROM QBDATE AS INT TODO
+      *    TODO: REBUILD LEGACY CODE BELOW : FROM SUBSCRIPT TO INDEX 
+      *    RM COMPUTE TO SET INDEX TO 1-27 OF NAKSHATRA ...   
+      * ---------------------------------------------------------------
+      
+           COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100 
+                                + WS-QREC01-SQ-ROWSET-D 
+           EVALUATE WS-MONTH-DAY 
               WHEN 0413 
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
               WHEN 0414 THRU 0426
@@ -768,12 +741,53 @@
                  COMPUTE WS-U(I,26) = WS-U(I,26) + 1
               WHEN 0401 THRU 0412
                  COMPUTE WS-N(I,27) = WS-N(I,27) + 1
-      *        WHEN 0511
-      *           COMPUTE WS-U(I,27) = WS-U(I,) + 1
-
            END-EVALUATE
-
-           
+      * ---------------------------------------------------------------
+      *TODO INSIDE ONE OF 27 N. PUTS GENDER,ALIVE STATUS
+           EVALUATE WS-QREC01-SQ-ROWSET-ALIVE(INX-SQ-A) 
+            WHEN 'A' 
+             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
+              WHEN 'M' 
+              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) 
+              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) + 1 
+              WHEN 'F' 
+              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) 
+              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) + 1 
+             END-EVALUATE 
+            WHEN 'D'  
+             EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
+              WHEN 'M' 
+              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) 
+              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) + 1 
+              WHEN 'F' 
+              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) 
+              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) + 1 
+             END-EVALUATE       
+            END-EVALUATE
+      *---------------------------------
+      *    INDEXES
+           *> YEAR, MONTH, DAY
+           SET INX-SQ-Y UP BY 1 
+           SET INX-SQ-M UP BY 1 
+           SET INX-SQ-D UP BY 1 
+           *> GENDER, ALIVE
+           SET INX-SQ-G UP BY 1 
+           SET INX-SQ-A UP BY 1 
+      * -----------------------------------------
+            COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
+            IF WS-SQ-INX01 <= 0 THEN 
+            EXIT PERFORM 
+            END-IF 
+            END-PERFORM 
+      * ---------------------------------------------------------------
+            WHEN 201   *>MQ01
+      * ---------------------------------------------------------------      
+            CONTINUE 
+      * ---------------------------------------------------------------
+            WHEN OTHER 
+            DISPLAY 'ERROR: SOMETHING WENT WRONG... WS-NC-FLAG=',
+             WS-NC-FLAG 
+           END-EVALUATE 
            EXIT.
       ******************************************************************     
        PARA-ANALYSE-DATA.
