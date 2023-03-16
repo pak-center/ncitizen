@@ -279,18 +279,24 @@
         05 RECV01-TABLE-STATS.
          10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
                        RECV01-INTERVAL-COUNT INDEXED BY I.
-         15 RECV01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
-          20 RECV01-MALE           PIC   9(9) COMP-5. *>(18) MAX
-          20 RECV01-FEMALE         PIC   9(9) COMP-5.
-         15 RECV01-NTAB OCCURS 27 TIMES. *>INDEXED BY
+      *   15 RECV01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
+      *    20 RECV01-MALE           PIC   9(9) COMP-5. *>(18) MAX
+      *    20 RECV01-FEMALE         PIC   9(9) COMP-5.
+         15 RECV01-NTAB OCCURS 27 TIMES INDEXED BY INX-N. 
           20 WS-N                  PIC   9(9) COMP-5.
           20 WS-U                  PIC   9(9) COMP-5.
-          20 RECV01-NTAB-AGE OCCURS 120 TIMES. *>INDEXED BY
-           25 RECV01-NTAB-AGE      PIC 9(9) COMP-5. 
-           25 RECV01-NTAB-AGE-U    PIC 9(9) COMP-5. 
-          20 RECV01-NTAB-CITIZEN OCCURS 2 TIMES. 
+          20 RECV01-NTAB-AGE OCCURS 120 TIMES INDEXED BY INX-AGE. 
+      *     25 RECV01-NTAB-AGE      PIC 9(9) COMP-5. 
+      *     25 RECV01-NTAB-AGE-U    PIC 9(9) COMP-5. 
+          23 RECV01-NTAB-CITIZEN OCCURS 2 TIMES INDEXED BY INX-AC. 
+          *> 1-ALIVE,2-DEAD
            25 RECV01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
            25 RECV01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
+          23 RECV01-NTAB-UNKNOWN OCCURS 2 TIMES INDEXED BY INX-AU. 
+          *> 1-ALIVE,2-DEAD
+           25 RECV01-NTAB-UNKNOWN-MALE   PIC 9(9) COMP-5. 
+           25 RECV01-NTAB-UNKNOWN-FEMALE PIC 9(9) COMP-5. 
+      
       * ---------------------------------------------------------------
         05 RECV01-SUMMARY.   
          10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
@@ -585,20 +591,27 @@
       * -----------------------------------------      
       *    TODO IMPL QDATE FOR AGE 1 - 120 YEARS
       *    COMPUTE GOES TO NOT TO 1 VAR BUT TO TABLE_1-120 VARS
+      *TODO SELECTS PROPER NAKSHATRA AND SETS INDEX FOR IT
+           
+      *TODO INSIDE ONE OF 27 N. PUTS GENDER,ALIVE STATUS
            EVALUATE WS-QREC01-SQ-ROWSET-ALIVE(INX-SQ-A) 
             WHEN 'A' 
              EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
               WHEN 'M' 
-              COMPUTE RECV01-MALE(I,1) = RECV01-MALE(I,1) + 1 
+              COMPUTE RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) 
+              = RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) + 1 
               WHEN 'F' 
-              COMPUTE RECV01-FEMALE(I,1) = RECV01-FEMALE(I,1) + 1 
+              COMPUTE RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) 
+              = RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) + 1 
              END-EVALUATE 
             WHEN 'D'  
              EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
               WHEN 'M' 
-              COMPUTE RECV01-MALE(I,2) = RECV01-MALE(I,2) + 1 
+              COMPUTE RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) 
+              = RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) + 1 
               WHEN 'F' 
-              COMPUTE RECV01-FEMALE(I,2) = RECV01-FEMALE(I,2) + 1 
+              COMPUTE RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) 
+              = RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) + 1 
              END-EVALUATE       
             END-EVALUATE
       *---------------------------------
@@ -771,17 +784,17 @@
            DISPLAY RECV01-HLINE 
            COMPUTE WS-TAB-COUNTER = WS-TAB-COUNTER + 1
       ******************************************************************     
-      *    PART FOR SUMMARY
+      *    PART FOR SUMMARY REBUILD LEGACY CODE TO NEW RECV01
       ******************************************************************
-           ADD RECV01-FEMALE(1) RECV01-MALE(1) *> ALIVE
-               RECV01-FEMALE(2) RECV01-MALE(2) *> DEAD
-           TO RECV01-S-TOTAL-CP
-           ON SIZE ERROR DISPLAY 'PANIC: ',
-           'PIC CLAUSE RECV01-S-TOTAL-CP ',
-           'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
+      *     ADD RECV01-FEMALE(1) RECV01-MALE(1) *> ALIVE
+      *         RECV01-FEMALE(2) RECV01-MALE(2) *> DEAD
+      *     TO RECV01-S-TOTAL-CP
+      *     ON SIZE ERROR DISPLAY 'PANIC: ',
+      *     'PIC CLAUSE RECV01-S-TOTAL-CP ',
+      *     'NEEDS TO BE GREATER THEN (9)! SUGGEST CHANGE TO (18)' 
       * ---------------------------------------------------------------
-           SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
-           FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
+      *     SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
+      *     FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
            DISPLAY RECV01-HLINE
            END-PERFORM
       *NTAB-NAMES
