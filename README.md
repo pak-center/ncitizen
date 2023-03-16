@@ -22,9 +22,19 @@
 
 ## General info
 
-**Nakshatra Citizen** - COBOL PGM to extract dates of birth from BIG DATA in DB2 using SQL queries in batch processing.
+**Nakshatra Citizen** - COBOL PGM to extract citizens birthdates from BIG DATA in DB2 using SQL queries in batch processing.
 Does simple Vedic Astrology calculations for 27 Nakshatras by grouping processing data into 27 collections.
-Afterwards, does the analytics and displays the statistics with horizontal bar view. At the end, writes them to the data set as a report.
+
+Afterwards, does the analytics and displays the statistics with horizontal bar view. At the end, writes them to QSAM dataset as a report.
+
+**The software has three operating modes:** 
+| **Mode**| **Name** | **Efficiency** | **Calculations** | **Description** |
+|:---:|:---:|:---:|:---|:---|
+| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 1200 |
+| `MQ` | Multi SQL Queries | best | mostly DB side | uses ROWSET Processing = 121 |
+| `DS` | Dataset mode | | only APP side | prints previously saved historical records to the SPOOL area |
+
+By design, it works on country identity documents and is limited to the size of the country's population. For global calculations it is necessary to correct the size of variables and add a list of databases from which data will be retrieved in turn or redesign DS mode and merge multiple records and PRINTS them as a single data sheet.
 
 ```cobol
       ******************************************************************
@@ -60,8 +70,9 @@ Project is created with:
 ## Features
 
 SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
+
 | Feature       | % Progress | Status      |
-| ---           | ---        |---          |
+| :---          | :---       | :---:       |
 | SLOW SQL SQ   | ########## | Completed   |
 | ROWSET for SQ | ########## | Completed   |
 | FAST SQL MQ   | ####       | In Progress |
