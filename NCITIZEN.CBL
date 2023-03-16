@@ -256,53 +256,59 @@
       *    STRUCTURE IS BINARY
       *    STRUCTURE MUST BE READ BY PGM AND PRINT - DISPLAY TO THE USER
       ******************************************************************
-       01 RECV01.
+       01 REC01.
       * ---------------------------------------------------------------
-        05 RECV01-HEADER.
-         10 RECV01-RLENGTH         PIC   9(4) COMP-5. *> 65535
+        05 REC01-HEADER.
+         10 REC01-RLENGTH         PIC   9(4) COMP-5. *> 65535
          10 FILLER                 PIC   X(76).
-         10 RECV01-CRC             PIC   A(30) VALUE 
+         10 REC01-CRC             PIC   A(30) VALUE 
                                    'AUTHOR: PRZEMYSLAW ADAM KUPISZ'.
-         10 RECV01-HLINE           PIC   X(80) VALUES ALL '*'.
-         10 RECV01-PGM.
-          15 RECV01-PGM-START-DATE PIC   99(4)/99/99.
+         10 REC01-HLINE           PIC   X(80) VALUES ALL '*'.
+         10 REC01-PGM.
+          15 REC01-PGM-START-DATE PIC   99(4)/99/99.
          10 FILLER                 PIC   X(40) VALUES ALL '@'.
       *
-         10 RECV01-USER            PIC   X(8).  
-      *   10 RECV01-CURRENT-DATE-DB2    PIC   X(10).           
-         10 RECV01-INTERVAL-VAL    PIC   S999 COMP-3 VALUE 10. 
-         10 RECV01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
+         10 REC01-USER            PIC   X(8).  
+      *   10 REC01-CURRENT-DATE-DB2    PIC   X(10).           
+         10 REC01-INTERVAL-VAL    PIC   S999 COMP-3 VALUE 10. 
+         10 REC01-INTERVAL-COUNT  PIC   S9(3) VALUE 120. *>MAX YEARS  
 
       * ---------------------------------------------------------------        
       * CHECK 05 date1 FORMAT DATE "%m/%d/@Y".       
       * ---------------------------------------------------------------
-        05 RECV01-TABLE-STATS.
-         10 RECV01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
-                       RECV01-INTERVAL-COUNT INDEXED BY I.
-      *   15 RECV01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
-      *    20 RECV01-MALE           PIC   9(9) COMP-5. *>(18) MAX
-      *    20 RECV01-FEMALE         PIC   9(9) COMP-5.
-         15 RECV01-NTAB OCCURS 27 TIMES INDEXED BY INX-N. 
+        05 REC01-TABLE-STATS.
+         10 REC01-TAB OCCURS 1 TO 120 TIMES DEPENDING ON 
+                       REC01-INTERVAL-COUNT INDEXED BY I.
+      *   15 REC01-CITIZEN OCCURS 2 TIMES. *> 1-ALIVE, 2-DEAD
+      *    20 REC01-MALE           PIC   9(9) COMP-5. *>(18) MAX
+      *    20 REC01-FEMALE         PIC   9(9) COMP-5.
+         15 REC01-NTAB OCCURS 27 TIMES INDEXED BY INX-N. 
           20 WS-N                  PIC   9(9) COMP-5.
           20 WS-U                  PIC   9(9) COMP-5.
-          20 RECV01-NTAB-AGE OCCURS 120 TIMES INDEXED BY INX-AGE. 
-      *     25 RECV01-NTAB-AGE      PIC 9(9) COMP-5. 
-      *     25 RECV01-NTAB-AGE-U    PIC 9(9) COMP-5. 
-          23 RECV01-NTAB-CITIZEN OCCURS 2 TIMES INDEXED BY INX-AC. 
+          20 REC01-NTAB-AGE OCCURS 120 TIMES INDEXED BY INX-AGE. 
+      *     25 REC01-NTAB-AGE      PIC 9(9) COMP-5. 
+      *     25 REC01-NTAB-AGE-U    PIC 9(9) COMP-5. 
+          23 REC01-NTAB-CITIZEN OCCURS 2 TIMES INDEXED BY INX-AC. 
           *> 1-ALIVE,2-DEAD
-           25 RECV01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
-           25 RECV01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
-          23 RECV01-NTAB-UNKNOWN OCCURS 2 TIMES INDEXED BY INX-AU. 
+           25 REC01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
+           25 REC01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
+          23 REC01-NTAB-UNKNOWN OCCURS 2 TIMES INDEXED BY INX-AU. 
           *> 1-ALIVE,2-DEAD
-           25 RECV01-NTAB-UNKNOWN-MALE   PIC 9(9) COMP-5. 
-           25 RECV01-NTAB-UNKNOWN-FEMALE PIC 9(9) COMP-5. 
+           25 REC01-NTAB-UNKNOWN-MALE   PIC 9(9) COMP-5. 
+           25 REC01-NTAB-UNKNOWN-FEMALE PIC 9(9) COMP-5. 
       
       * ---------------------------------------------------------------
-        05 RECV01-SUMMARY.   
-         10 RECV01-S-TOTAL-CP      PIC   9(9) COMP-5.
-         10 RECV01-S-TALIVE-CP     PIC   9(9) COMP-5.
-         10 RECV01-S-NMAX-PQ       PIC   9(9) COMP-5.
-         10 RECV01-S-NMIN-PQ       PIC   9(9) COMP-5.
+        05 REC01-TOTAL-SUMMARY.   
+      *   10 REC01-T-CITIZEN                PIC   9(9) COMP-5.
+         10 REC01-T-CITIZEN-ALIVE          PIC   9(9) COMP-5.
+         10 REC01-T-CITIZEN-ALIVE-MALE     PIC   9(9) COMP-5.
+         10 REC01-T-CITIZEN-ALIVE-FEMALE   PIC   9(9) COMP-5.
+      *   
+         10 REC01-T-NAKSH-MAX-CITIZEN      PIC   9(9) COMP-5.
+         10 REC01-T-NAKSH-MIN-CITIZEN      PIC   9(9) COMP-5.
+         10 REC01-T-NAKSH-MAX-CITIZEN-M    PIC   9(9) COMP-5.
+         10 REC01-T-NAKSH-MIN-CITIZEN-F    PIC   9(9) COMP-5.
+         
       * ---------------------------------------------------------------        
       *    THIS PART MUST BE REWRITTEN AND MOVED TO RECV01
       * ---------------------------------------------------------------
@@ -406,8 +412,8 @@
       * ---------------------------------------------------------------    
       *    TAKES SOME INFO FROM OS TO PRINT IN SUMMARY VIEW
       * ---------------------------------------------------------------
-           ACCEPT RECV01-PGM-START-DATE FROM DATE YYYYMMDD
-           ACCEPT RECV01-USER           FROM USERNAME
+           ACCEPT REC01-PGM-START-DATE FROM DATE YYYYMMDD
+           ACCEPT REC01-USER           FROM USERNAME
       D    DISPLAY 'DEBUG: ', WS-ARGS, ' PARAMETERS FROM JCL'
       D    DISPLAY 'DEBUG: ', RECV01-USER, RECV01-PGM-START-DATE,
       D             'USER, CURRENT DATE'            
@@ -423,8 +429,8 @@
               COMPUTE WS-PGM-INTERVAL-VAL = WS-PGM-INTERVAL-VAL + 1
            END-IF
            END-PERFORM
-           MOVE WS-PGM-INTERVAL-VAL TO RECV01-INTERVAL-VAL *>4SQL Q
-           DIVIDE RECV01-INTERVAL-VAL INTO RECV01-INTERVAL-COUNT *>4TAB         
+           MOVE WS-PGM-INTERVAL-VAL TO REC01-INTERVAL-VAL *>4SQL Q
+           DIVIDE REC01-INTERVAL-VAL INTO REC01-INTERVAL-COUNT *>4TAB         
       
            EXIT.      
       ******************************************************************
@@ -442,7 +448,7 @@
            END-EXEC 
            EVALUATE SQLCODE 
             WHEN ZERO 
-           MOVE RECV01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
+           MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
            WHEN OTHER
             PERFORM PARA-SQL-ERROR-CHECK 
            END-EVALUATE
@@ -496,8 +502,8 @@
       *  IMPLEMENT HERE LOOP PERFORM FOR GENERATING DYNAMIC TABLES
       *    1 - 120
            SET I TO 1 
-           MOVE RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL *> NEEDED?
-           PERFORM RECV01-INTERVAL-COUNT TIMES 
+           MOVE REC01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL *> NEEDED?
+           PERFORM REC01-INTERVAL-COUNT TIMES 
       ******************************************************************
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
@@ -516,7 +522,7 @@
            END-PERFORM
 
       ******************************************************************        
-           ADD RECV01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL
+           ADD REC01-INTERVAL-VAL TO WS-PGM-INTERVAL-VAL
            MOVE WS-PGM-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL
            SET I UP BY 1 
            END-PERFORM 
@@ -539,7 +545,7 @@
       *     
            PERFORM
             VARYING WS-SQL-MQ-I
-            FROM RECV01-INTERVAL-COUNT BY RECV01-INTERVAL-COUNT
+            FROM REC01-INTERVAL-COUNT BY REC01-INTERVAL-COUNT
             UNTIL WS-SQL-MQ-I > 120
               *>TODO
       ******************************************************************
@@ -598,20 +604,20 @@
             WHEN 'A' 
              EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
               WHEN 'M' 
-              COMPUTE RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) 
-              = RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) + 1 
+              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) 
+              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,1) + 1 
               WHEN 'F' 
-              COMPUTE RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) 
-              = RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) + 1 
+              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) 
+              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,1) + 1 
              END-EVALUATE 
             WHEN 'D'  
              EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) 
               WHEN 'M' 
-              COMPUTE RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) 
-              = RECV01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) + 1 
+              COMPUTE REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) 
+              = REC01-NTAB-CITIZEN-MALE(I,INX-N,INX-AGE,2) + 1 
               WHEN 'F' 
-              COMPUTE RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) 
-              = RECV01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) + 1 
+              COMPUTE REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) 
+              = REC01-NTAB-CITIZEN-FEMALE(I,INX-N,INX-AGE,2) + 1 
              END-EVALUATE       
             END-EVALUATE
       *---------------------------------
@@ -763,25 +769,25 @@
       ******************************************************************
       *    WELCOME SCREEN MSG
       ******************************************************************
-           DISPLAY RECV01-HLINE
-           DISPLAY RECV01-HLINE
-           DISPLAY RECV01-HLINE
+           DISPLAY REC01-HLINE
+           DISPLAY REC01-HLINE
+           DISPLAY REC01-HLINE
            DISPLAY 'NCITIZEN - (VEDIC ASTROLOGY) NAKSHATRA CITIZEN',
            ' SOFTWARE (C) GNU GPLV3 2023 PRZEMYSLAW ADAM KUPISZ'
-           DISPLAY 'SUBMITTED FOR USER: ', RECV01-USER,
-           ' AT ', RECV01-PGM-START-DATE
-           DISPLAY 'INTERVAL SET TO: ', RECV01-INTERVAL-VAL
-           DISPLAY RECV01-HLINE
+           DISPLAY 'SUBMITTED FOR USER: ', REC01-USER,
+           ' AT ', REC01-PGM-START-DATE
+           DISPLAY 'INTERVAL SET TO: ', REC01-INTERVAL-VAL
+           DISPLAY REC01-HLINE
       ******************************************************************
       *    TABLE STATISTICS AND % VIEW
       ****************************************************************** 
       *    LOOP FOR TABLES PRINT
       ******************************************************************
-           PERFORM RECV01-INTERVAL-COUNT TIMES 
-           DISPLAY RECV01-HLINE 
+           PERFORM REC01-INTERVAL-COUNT TIMES 
+           DISPLAY REC01-HLINE 
            DISPLAY 'TABLE ', WS-TAB-COUNTER,
-           ' FROM ',RECV01-INTERVAL-COUNT
-           DISPLAY RECV01-HLINE 
+           ' FROM ',REC01-INTERVAL-COUNT
+           DISPLAY REC01-HLINE 
            COMPUTE WS-TAB-COUNTER = WS-TAB-COUNTER + 1
       ******************************************************************     
       *    PART FOR SUMMARY REBUILD LEGACY CODE TO NEW RECV01
@@ -795,7 +801,7 @@
       * ---------------------------------------------------------------
       *     SUBTRACT RECV01-FEMALE(2) RECV01-MALE(2) 
       *     FROM RECV01-S-TOTAL-CP GIVING RECV01-S-TALIVE-CP
-           DISPLAY RECV01-HLINE
+           DISPLAY REC01-HLINE
            END-PERFORM
       *NTAB-NAMES
       * 'ASWINI'
@@ -828,18 +834,23 @@
       ******************************************************************
       *    SUMMARY
       ****************************************************************** 
-           DISPLAY RECV01-HLINE
-           DISPLAY RECV01-HLINE(1:1), '  ', 'SUMMARY' 
-           DISPLAY RECV01-HLINE
+           DISPLAY REC01-HLINE
+           DISPLAY REC01-HLINE(1:1), '  ', 'SUMMARY' 
+           DISPLAY REC01-HLINE
            
-           DISPLAY 'TOTAL CITIZEN POPULATION: ', RECV01-S-TOTAL-CP
-           DISPLAY 'ALIVE CITIZEN POPULATION: ', RECV01-S-TALIVE-CP
+           DISPLAY 'TOTAL ALIVE CITIZEN POPULATION:        ', 
+           REC01-T-CITIZEN-ALIVE
+           DISPLAY 'TOTAL ALIVE MALE CITIZEN POPULATION:   ', 
+           REC01-T-CITIZEN-ALIVE-MALE
+           DISPLAY 'TOTAL ALIVE FEMALE CITIZEN POPULATION: ',
+            REC01-T-CITIZEN-ALIVE-FEMALE
+           
            DISPLAY 'MAXIMUM NAKSHATRA QUANTITY IN POPULATION: ',
-            RECV01-S-NMAX-PQ
+            REC01-T-NAKSH-MAX-CITIZEN
            DISPLAY 'MINIMUM NAKSHATRA QUANTITY IN POPULATION: ',
-            RECV01-S-NMIN-PQ
+            REC01-T-NAKSH-MIN-CITIZEN
            
-           DISPLAY RECV01-HLINE
+           DISPLAY REC01-HLINE
            EXIT.
       ******************************************************************
        PARA-WRITE-TO-DATASET.
@@ -852,7 +863,7 @@
            DISPLAY 'INFO:    ',
            'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
            END-EVALUATE
-           MOVE RECV01 TO RECV01-DS
+           MOVE REC01 TO RECV01-DS
            WRITE RECV01-DS
            END-WRITE.
            CLOSE RECLOGW.
@@ -862,11 +873,11 @@
        PARA-READ-FROM-DATASET. 
            OPEN INPUT RECLOGR 
            PERFORM UNTIL WS-EOF-FLAG = 'Y' 
-           READ RECV01-DS-R INTO RECV01 
+           READ RECV01-DS-R INTO REC01 
            AT END 
            MOVE 'Y' TO WS-EOF-FLAG 
            NOT AT END 
-           MOVE RECV01-DS-R TO RECV01 *>CHANGE TO REC-LENGTH FOR V
+           MOVE RECV01-DS-R TO REC01 *>CHANGE TO REC-LENGTH FOR V
            *>CHECK CRC TODO 
            PERFORM PARA-CREATE-VIEW           
            END-READ 
