@@ -13,6 +13,8 @@
 ## Table of contents
 
 * [General info](#general-info)
+* [Sequence Diagram for `SQ` mode](sequence-diagram-for-sq-mode)
+* [Sequence Diagram for `MQ` mode](sequence-diagram-for-mq-mode)
 * [Technologies](#technologies)
 * [Installation](#installation)
 * [Features](#features)
@@ -35,6 +37,22 @@ Afterwards, does the analytics and displays the statistics with horizontal bar v
 | `DS` | Dataset mode | | only APP side | prints previously saved historical records to the SPOOL area |
 
 By design, it works on country identity documents and is limited to the size of the country's population. For global calculations it is necessary to correct the size of variables and add a list of databases from which data will be retrieved in turn or redesign DS mode and merge multiple records and PRINTS them as a single data sheet.
+
+## Sequence Diagram for `SQ` mode
+```mermaid
+sequenceDiagram
+    PGM(SQ)->>+DB2: SELECT current date
+    DB2->>-PGM(SQ): Sending data
+
+    PGM(SQ)->>DB2: Single SELECT SQ query
+    loop EVERY ROWSET
+        DB2->>PGM(SQ): Sending data ROWSET=1200
+    end
+```
+
+## Sequence Diagram for `MQ` mode
+
+In Progress...
 
 ```cobol
       ******************************************************************
