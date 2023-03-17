@@ -38,22 +38,6 @@ Afterwards, does the analytics and displays the statistics with horizontal bar v
 
 By design, it works on country identity documents and is limited to the size of the country's population. For global calculations it is necessary to correct the size of variables and add a list of databases from which data will be retrieved in turn or redesign DS mode and merge multiple records and PRINTS them as a single data sheet.
 
-## Sequence Diagram for `SQ` mode
-```mermaid
-sequenceDiagram
-    PGM(SQ)->>+DB2: SELECT current date
-    DB2->>-PGM(SQ): Sending data
-
-    PGM(SQ)->>DB2: Single SELECT SQ query
-    loop EVERY ROWSET
-        DB2->>PGM(SQ): Sending data ROWSET=1200
-    end
-```
-
-## Sequence Diagram for `MQ` mode
-
-In Progress...
-
 ```cobol
       ******************************************************************
       *                      NAKSHATRA CITIZEN
@@ -69,6 +53,34 @@ In Progress...
       *                             90% = |######### |
       *
       ******************************************************************
+```
+
+## Sequence Diagram for `SQ` mode
+```mermaid
+sequenceDiagram
+    PGM(SQ)->>+DB2: SELECT current date
+    DB2->>-PGM(SQ): Sending data
+    PGM(SQ)->>DB2: Single SELECT SQ query
+    loop EVERY ROWSET
+        DB2->>PGM(SQ): Sending data ROWSET=1200
+    end
+```
+
+## Sequence Diagram for `MQ` mode
+
+```mermaid
+sequenceDiagram
+    PGM(MQ)->>+DB2: SELECT lower date SQL
+    DB2->>-PGM(MQ): Sending data
+    PGM(MQ)->>+DB2: SELECT upper date SQL
+    DB2->>-PGM(MQ): Sending data
+    PGM(MQ)->>+DB2: 4x SELECT query
+    DB2->>-PGM(MQ): Sending data
+    PGM(MQ)->>+DB2: SELECT MQ query
+    DB2->>-PGM(MQ): Sending data ROWSET=121
+    Note over PGM(MQ),DB2:Multi Queries
+    PGM(MQ)->>+DB2: SELECT MQ query
+    DB2->>-PGM(MQ): Sending data ROWSET=121
 ```
 
 ## Technologies
