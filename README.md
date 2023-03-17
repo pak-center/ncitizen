@@ -13,8 +13,8 @@
 ## Table of contents
 
 * [General info](#general-info)
-* [SQ mode Sequence Diagram](sq-mode-sequence-diagram)
-* [MQ mode Sequence Diagram](mq-mode-sequence-diagram)
+* [`SQ` mode Sequence Diagram](#sq-mode-sequence-diagram)
+* [`MQ` mode Sequence Diagram](#mq-mode-sequence-diagram)
 * [Technologies](#technologies)
 * [Installation](#installation)
 * [Features](#features)
@@ -55,7 +55,7 @@ By design, it works on country identity documents and is limited to the size of 
       ******************************************************************
 ```
 
-## SQ mode Sequence Diagram
+## `SQ` mode Sequence Diagram
 ```mermaid
 sequenceDiagram
     PGM(SQ)->>+DB2: SELECT current date
@@ -66,7 +66,7 @@ sequenceDiagram
     end
 ```
 
-## MQ mode Sequence Diagram
+## `MQ` mode Sequence Diagram
 
 ```mermaid
 sequenceDiagram
