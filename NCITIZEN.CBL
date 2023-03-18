@@ -172,7 +172,7 @@
            EXEC SQL  
               DECLARE CD01 CURSOR FOR 
               SELECT 
-              CAST(THIS_YEAR(CURRENT DATE) AS SMALLINT) 
+              THIS_YEAR(CURRENT DATE) 
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
@@ -182,8 +182,7 @@
            EXEC SQL  
               DECLARE CD02 CURSOR FOR 
               SELECT 
-              CAST((THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS) 
-              AS SMALLINT)  
+              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
