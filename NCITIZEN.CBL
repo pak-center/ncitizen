@@ -138,25 +138,25 @@
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         10 WS-QREC01-SQ-ROWSET-Y        PIC S9(08) COMP *>INT DB2
-               OCCURS 1200 TIMES INDEXED BY INX-SQ-Y. 
-         10 WS-QREC01-SQ-ROWSET-M        PIC S9(08) COMP *>INT DB2
-               OCCURS 1200 TIMES INDEXED BY INX-SQ-M. 
-         10 WS-QREC01-SQ-ROWSET-D        PIC S9(08) COMP *>INT DB2
-               OCCURS 1200 TIMES INDEXED BY INX-SQ-D. 
-         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 1200 TIMES
+         10 WS-QREC01-SQ-ROWSET-Y        PIC S9(04) COMP *>INT DB2
+               OCCURS 2300 TIMES INDEXED BY INX-SQ-Y. 
+         10 WS-QREC01-SQ-ROWSET-M        PIC S9(04) COMP *>INT DB2
+               OCCURS 2300 TIMES INDEXED BY INX-SQ-M. 
+         10 WS-QREC01-SQ-ROWSET-D        PIC S9(04) COMP *>INT DB2
+               OCCURS 2300 TIMES INDEXED BY INX-SQ-D. 
+         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2300 TIMES
                                                    INDEXED BY INX-SQ-G.  
-         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 1200 TIMES
+         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2300 TIMES
                                                    INDEXED BY INX-SQ-A.         
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
-         07 WS-QREC01-MQ-YEAR            PIC   S9(8)  COMP.
+         07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP.
          07 WS-QREC01-MQ-NR              PIC   S9(8)  COMP.
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(08) COMP *>INT DB2
+         07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(04) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-D. 
          07 WS-0QREC01-MQ-ROWSET-NR PIC S9(08) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-N.         
@@ -172,7 +172,7 @@
            EXEC SQL  
               DECLARE CD01 CURSOR FOR 
               SELECT 
-              THIS_YEAR(CURRENT DATE) 
+              CAST(THIS_YEAR(CURRENT DATE) AS SMALLINT) 
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
@@ -182,7 +182,8 @@
            EXEC SQL  
               DECLARE CD02 CURSOR FOR 
               SELECT 
-              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
+              CAST((THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS) 
+              AS SMALLINT)  
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
@@ -202,10 +203,10 @@
            EXEC SQL 
               DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
-              YEAR(CURRENT DATE) - YEAR(BDATE), *>AGE
+              CAST((YEAR(CURRENT DATE) - YEAR(BDATE)) AS SMALLINT), *>AGE
       *        YEAR(BDATE), 
-              MONTH(BDATE),
-              DAY(BDATE),
+              CAST(MONTH(BDATE) AS SMALLINT),
+              CAST(DAY(BDATE) AS SMALLINT),
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -230,7 +231,7 @@
            EXEC SQL 
               DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
               SELECT *> FOR GLOBAL COUNT_BIG()
-              YEAR(BDATE), COUNT(YEAR(BDATE)) *>AS NR 
+              CAST(YEAR(BDATE) AS SMALLINT), COUNT(YEAR(BDATE)) *>AS NR 
               FROM CITIZENS 
               WHERE 
               ALIVE = :WS-QREC01-ALIVE 
@@ -336,18 +337,18 @@
       *      15 WS-W-MONTH                  PIC   99.
       *      15 WS-W-DAY                    PIC   99.
        01 WS-SQ-COMMON.
-        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 1200. *>SQ TABLE L
+        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 2300. *>SQ TABLE L
       ******************************************************************
       *    VARIABLES FOR PARA-SQL-MQ.
       ******************************************************************
        01 WS-SQL-MQ.
         05 WS-SQL-MQ-I                PIC   S9(3).
-        05 WS-Q-DB2-CURRENT-Y         PIC   S9(8) COMP.
+        05 WS-Q-DB2-CURRENT-Y         PIC   S9(4) COMP.
       ******************************************************************
       *    VARIABLES FOR PROC-NAKSHATRA-COMPUTE AND PROC-ANALYSE-DATA
       ******************************************************************
        01 WS-STATS.
-        05 WS-MONTH-DAY               PIC   S9(8) COMP. 
+        05 WS-MONTH-DAY               PIC   S9(4) COMP. 
        01 WS-NC-FLAG                  PIC   S9(3)  COMP-5.
       ******************************************************************
       *    FS
@@ -512,7 +513,7 @@
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-           FETCH NEXT ROWSET FROM SQ01 FOR 1200 ROWS 
+           FETCH NEXT ROWSET FROM SQ01 FOR 2300 ROWS 
            INTO 
            :WS-QREC01-SQ-ROWSET-Y, *>INT 4 BYTES DB2
            :WS-QREC01-SQ-ROWSET-M, *>INT 4 BYTES DB2

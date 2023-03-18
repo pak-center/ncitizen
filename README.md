@@ -32,7 +32,7 @@ Afterwards, does the analytics and displays the statistics with horizontal bar v
 **The software has three operating modes:** 
 | **Mode**| **Name** | **Efficiency** | **Calculations** | **Description** |
 |:---:|:---:|:---:|:---|:---|
-| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 1200 |
+| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 2300 |
 | `MQ` | Multi SQL Queries | best | mostly DB side | uses ROWSET Processing = 121 |
 | `DS` | Dataset mode |n/a | only APP side | prints previously saved historical records to the SPOOL area |
 
@@ -62,7 +62,7 @@ sequenceDiagram
     DB2->>-PGM(SQ): Sending data
     PGM(SQ)->>DB2: Single SELECT SQ query
     loop EVERY ROWSET
-        DB2->>PGM(SQ): Sending data ROWSET=1200
+        DB2->>PGM(SQ): Sending data ROWSET=2300
     end
     Note over PGM(SQ),DB2:loop iterations = <br/> total citizens / 1200
 ```
