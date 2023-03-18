@@ -65,7 +65,7 @@ sequenceDiagram
     loop EVERY ROWSET
         DB2->>PGM(SQ): Sending data ROWSET=3200
     end
-    Note over PGM(SQ),DB2:loop iterations = <br/> total citizens / 1200
+    Note over PGM(SQ),DB2:loop iterations = <br/> total citizens / 3200
 ```
 
 ## `MQ` mode Sequence Diagram
