@@ -202,7 +202,8 @@
            EXEC SQL 
               DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
-              YEAR(BDATE), 
+              YEAR(CURRENT DATE) - YEAR(BDATE), *>AGE
+      *        YEAR(BDATE), 
               MONTH(BDATE),
               DAY(BDATE),
               GENDER, 
@@ -594,6 +595,9 @@
            *> LEGACY CODE MODIFY IT FOR ROWSET SUPPORT TOMORROW
            *> MOVE TO LOOP FOR ARRAY_2000 !
            EVALUATE WS-NC-FLAG 
+      * ---------------------------------------------------------------
+      *    SQ 01
+      * ---------------------------------------------------------------
             WHEN 101   *>SQ01
       * ---------------------------------------------------------------
       *    LOOP FOR TABLE_2000 COMPUTATION => RECV01
@@ -611,8 +615,8 @@
       *    TODO IMPL QDATE FOR AGE 1 - 120 YEARS
       *    COMPUTE GOES TO NOT TO 1 VAR BUT TO TABLE_1-120 VARS
       *    TODO SELECTS PROPER NAKSHATRA AND SETS INDEX FOR IT
-           SUBTRACT WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) FROM 
-           WS-Q-DB2-CURRENT-Y GIVING WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
+      *     SUBTRACT WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) FROM 
+      *    WS-Q-DB2-CURRENT-Y GIVING WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
            EVALUATE WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
             WHEN 1 THRU 120 
               CONTINUE  
