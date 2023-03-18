@@ -139,14 +139,14 @@
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
          10 WS-QREC01-SQ-ROWSET-Y        PIC S9(04) COMP *>INT DB2
-               OCCURS 2300 TIMES INDEXED BY INX-SQ-Y. 
-         10 WS-QREC01-SQ-ROWSET-M        PIC S9(04) COMP *>INT DB2
-               OCCURS 2300 TIMES INDEXED BY INX-SQ-M. 
-         10 WS-QREC01-SQ-ROWSET-D        PIC S9(04) COMP *>INT DB2
-               OCCURS 2300 TIMES INDEXED BY INX-SQ-D. 
-         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 2300 TIMES
+               OCCURS 3200 TIMES INDEXED BY INX-SQ-Y. 
+         10 WS-QREC01-SQ-ROWSET-MD        PIC S9(04) COMP *>INT DB2
+               OCCURS 3200 TIMES INDEXED BY INX-SQ-MD. 
+      *   10 WS-QREC01-SQ-ROWSET-D        PIC S9(04) COMP *>INT DB2
+      *         OCCURS 2300 TIMES INDEXED BY INX-SQ-D. 
+         10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 3200 TIMES
                                                    INDEXED BY INX-SQ-G.  
-         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 2300 TIMES
+         10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 3200 TIMES
                                                    INDEXED BY INX-SQ-A.         
       * ---------------------------------------------------------------  
         05 WS-QREC01-MQ.
@@ -157,7 +157,7 @@
          07 WS-QREC01-MQ-NR              PIC   S9(8)  COMP.
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
          07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(04) COMP *>INT DB2
-               OCCURS 121 TIMES INDEXED BY INX-MQ-D. 
+               OCCURS 121 TIMES INDEXED BY INX-MQ-Y. 
          07 WS-0QREC01-MQ-ROWSET-NR PIC S9(08) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-N.         
       * ---------------------------------------------------------------
@@ -203,10 +203,11 @@
            EXEC SQL 
               DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
-              CAST((YEAR(CURRENT DATE) - YEAR(BDATE)) AS SMALLINT), *>AGE
-      *        YEAR(BDATE), 
-              CAST(MONTH(BDATE) AS SMALLINT),
-              CAST(DAY(BDATE) AS SMALLINT),
+              CAST((YEAR(CURRENT DATE) - YEAR(BDATE)) AS SMALLINT), 
+              *>AGE FROM YEAR(BDATE), 
+              CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
+      *        CAST(MONTH(BDATE) AS SMALLINT),
+      *        CAST(DAY(BDATE) AS SMALLINT),
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -337,7 +338,7 @@
       *      15 WS-W-MONTH                  PIC   99.
       *      15 WS-W-DAY                    PIC   99.
        01 WS-SQ-COMMON.
-        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 2300. *>SQ TABLE L
+        05 WS-SQ-INX01    PIC   S9(4) COMP-5 VALUE 3200. *>SQ TABLE L
       ******************************************************************
       *    VARIABLES FOR PARA-SQL-MQ.
       ******************************************************************
@@ -513,11 +514,11 @@
            *> SQL QUERY HERE
            PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-           FETCH NEXT ROWSET FROM SQ01 FOR 2300 ROWS 
+           FETCH NEXT ROWSET FROM SQ01 FOR 3200 ROWS 
            INTO 
            :WS-QREC01-SQ-ROWSET-Y, *>INT 4 BYTES DB2
-           :WS-QREC01-SQ-ROWSET-M, *>INT 4 BYTES DB2
-           :WS-QREC01-SQ-ROWSET-D, *>INT 4 BYTES DB2
+           :WS-QREC01-SQ-ROWSET-MD, *>INT 4 BYTES DB2
+      *     :WS-QREC01-SQ-ROWSET-D, *>INT 4 BYTES DB2
            :WS-QREC01-SQ-ROWSET-GENDER, *> CHAR DB2
            :WS-QREC01-SQ-ROWSET-ALIVE *> CHAR DB2
            END-EXEC 
@@ -604,8 +605,8 @@
       *    LOOP FOR TABLE_2000 COMPUTATION => RECV01
       * ---------------------------------------------------------------
             SET INX-SQ-Y TO 1
-            SET INX-SQ-M TO 1
-            SET INX-SQ-D TO 1
+            SET INX-SQ-MD TO 1
+      *      SET INX-SQ-D TO 1
             *>
             SET INX-SQ-G TO 1
             SET INX-SQ-A TO 1
@@ -631,9 +632,9 @@
       *    RM COMPUTE TO SET INDEX TO 1-27 OF NAKSHATRA ...   
       * ---------------------------------------------------------------
       
-           COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100 
-                                + WS-QREC01-SQ-ROWSET-D 
-           EVALUATE WS-MONTH-DAY 
+      *     COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100 
+      *                          + WS-QREC01-SQ-ROWSET-D 
+           EVALUATE WS-QREC01-SQ-ROWSET-MD 
               WHEN 0413 
                  COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
               WHEN 0414 THRU 0426

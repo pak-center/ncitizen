@@ -29,10 +29,10 @@ Does simple Vedic Astrology calculations for 27 Nakshatras by grouping processin
 
 Afterwards, does the analytics and displays the statistics with horizontal bar view. At the end, writes them to QSAM dataset as a report.
 
-**The software has three operating modes:** 
+**The software has three operating modes:**
 | **Mode**| **Name** | **Efficiency** | **Calculations** | **Description** |
 |:---:|:---:|:---:|:---|:---|
-| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 2300 |
+| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 3200 |
 | `MQ` | Multi SQL Queries | best | mostly DB side | uses ROWSET Processing = 121 |
 | `DS` | Dataset mode |n/a | only APP side | prints previously saved historical records to the SPOOL area |
 
@@ -56,13 +56,14 @@ By design, it works on country identity documents and is limited to the size of 
 ```
 
 ## `SQ` mode Sequence Diagram
+
 ```mermaid
 sequenceDiagram
     PGM(SQ)->>+DB2: SELECT current date
     DB2->>-PGM(SQ): Sending data
     PGM(SQ)->>DB2: Single SELECT SQ query
     loop EVERY ROWSET
-        DB2->>PGM(SQ): Sending data ROWSET=2300
+        DB2->>PGM(SQ): Sending data ROWSET=3200
     end
     Note over PGM(SQ),DB2:loop iterations = <br/> total citizens / 1200
 ```
