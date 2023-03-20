@@ -593,7 +593,7 @@
       ****************************************************************** 
       *    TODO !
       *    BECAUSE OF 2 DIFFERENT MODES (SQ & MQ) WE NEED 2 TYPES OF
-      *    RECORDS AND DIFFERENT PROCEEDING WAYS
+      *    RECORDS AND DIFFERENT PROCEEDING WAYS OR MORE MQ QUERIES
       ******************************************************************
               *> WS-QBDATE
               *> WS-QGENDER
@@ -900,7 +900,12 @@
               = REC01-NTAB-UNKNOWN-FEMALE(I,INX-N,INX-AGE,2) + 1 
              END-EVALUATE       
             END-EVALUATE
-      *---------------------------------
+      *---------------------------------------------------------------
+            COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
+            IF WS-SQ-INX01 <= 0 THEN 
+             EXIT PERFORM 
+            END-IF 
+      *---------------------------------------------------------------
       *    INDEXES
            *> YEAR, MONTH, DAY
            SET INX-SQ-Y UP BY 1 
@@ -909,11 +914,7 @@
            *> GENDER, ALIVE
            SET INX-SQ-G UP BY 1 
            SET INX-SQ-A UP BY 1 
-      * -----------------------------------------
-            COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
-            IF WS-SQ-INX01 <= 0 THEN 
-            EXIT PERFORM 
-            END-IF 
+      * ---------------------------------------------------------------         
             END-PERFORM 
       * ---------------------------------------------------------------
             WHEN 201   *>MQ01
