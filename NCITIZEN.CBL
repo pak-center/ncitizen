@@ -446,6 +446,12 @@
       *    PARAGRAPH SQL DATE DB2
       ******************************************************************
        PARA-SQL-DATE-DB2. 
+
+           IF PARM-DATA(1:1) = 'S' THEN
+            COMPUTE WS-QREC01-INTERVAL-DECIMAL = -1 * 
+                    WS-QREC01-INTERVAL-DECIMAL
+           END-IF
+
            EXEC SQL
               OPEN CD01
            END-EXEC. 
