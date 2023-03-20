@@ -447,13 +447,13 @@
       ******************************************************************
        PARA-SQL-DATE-DB2. 
 
-           IF PARM-DATA(1:1) = 'S' THEN
+           IF PARM-DATA(1:1) = 'S' THEN 
             COMPUTE WS-QREC01-INTERVAL-DECIMAL = -1 * 
-                    WS-QREC01-INTERVAL-DECIMAL
-           END-IF
+                    WS-QREC01-INTERVAL-DECIMAL 
+           END-IF 
 
            EXEC SQL
-              OPEN CD01
+              OPEN CD01 
            END-EXEC. 
            PERFORM PARA-SQL-ERROR-CHECK 
       *     
@@ -465,7 +465,7 @@
            MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL 
       *VERIFY
            EXEC SQL
-              CLOSE CD01
+              CLOSE CD01 
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
       * ---------------------------------------------------------------  
@@ -633,125 +633,179 @@
               MOVE 120 TO WS-QREC01-SQ-ROWSET-Y(INX-SQ-Y) 
            END-EVALUATE  
       * ---------------------------------------------------------------
-      *    TODO: REBUILD LEGACY CODE BELOW : FROM SUBSCRIPT TO INDEX 
-      *    RM COMPUTE TO SET INDEX TO 1-27 OF NAKSHATRA ...   
+      *    RM COMPUTE TO SET INDEX TO 1-27 OF NAKSHATRAS ...   
       * ---------------------------------------------------------------
       
       *     COMPUTE WS-MONTH-DAY = WS-QREC01-SQ-ROWSET-M * 100 
       *                          + WS-QREC01-SQ-ROWSET-D 
            EVALUATE WS-QREC01-SQ-ROWSET-MD 
               WHEN 0413 
-                 COMPUTE WS-U(I,27) = WS-U(I,27) + 1 
-              WHEN 0414 THRU 0426
-                 COMPUTE WS-N(I,1) = WS-N(I,1) + 1
+                 SET INX-N TO 27
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1 
+              WHEN 0414 THRU 0426 
+                 SET INX-N TO 1
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0427
-                 COMPUTE WS-U(I,1) = WS-U(I,1) + 1
+                 SET INX-N TO 1
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0428 THRU 0510
-                 COMPUTE WS-N(I,2) = WS-N(I,2) + 1
+                 SET INX-N TO 2
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0511
-                 COMPUTE WS-U(I,2) = WS-U(I,2) + 1
+                 SET INX-N TO 2
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
       *
               WHEN 0512 THRU 0524
-                 COMPUTE WS-N(I,3) = WS-N(I,3) + 1
+                 SET INX-N TO 3
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0525
-                 COMPUTE WS-U(I,3) = WS-U(I,3) + 1
+                 SET INX-N TO 3
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0526 THRU 0607
-                 COMPUTE WS-N(I,4) = WS-N(I,4) + 1
+              SET INX-N TO 4
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0608
-                 COMPUTE WS-U(I,4) = WS-U(I,4) + 1
+              SET INX-N TO 4
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0609 THRU 0620
-                 COMPUTE WS-N(I,5) = WS-N(I,5) + 1
+              SET INX-N TO 5
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0621
-                 COMPUTE WS-U(I,5) = WS-U(I,5) + 1
+              SET INX-N TO 5
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0622 THRU 0704
-                 COMPUTE WS-N(I,6) = WS-N(I,6) + 1
+              SET INX-N TO 6
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0705
-                 COMPUTE WS-U(I,6) = WS-U(I,6) + 1
+              SET INX-N TO 6
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0706 THRU 0718
-                 COMPUTE WS-N(I,7) = WS-N(I,7) + 1
+              SET INX-N TO 7 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0719
-                 COMPUTE WS-U(I,7) = WS-U(I,7) + 1              
+              SET INX-N TO 7 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1              
               WHEN 0720 THRU 0801
-                 COMPUTE WS-N(I,8) = WS-N(I,8) + 1
-              WHEN 0802
-                 COMPUTE WS-U(I,8) = WS-U(I,8) + 1
+              SET INX-N TO 8 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 0802 
+              SET INX-N TO 8 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0803 THRU 0815
-                 COMPUTE WS-N(I,9) = WS-N(I,9) + 1
+              SET INX-N TO 9 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0816
-                 COMPUTE WS-U(I,9) = WS-U(I,9) + 1
+              SET INX-N TO 9 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0817 THRU 0829
-                 COMPUTE WS-N(I,10) = WS-N(I,10) + 1
+              SET INX-N TO 10 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0830
-                 COMPUTE WS-U(I,10) = WS-U(I,10) + 1
+              SET INX-N TO 10 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0831 THRU 0912
-                 COMPUTE WS-N(I,11) = WS-N(I,11) + 1
+              SET INX-N TO 11 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0913
-                 COMPUTE WS-U(I,11) = WS-U(I,11) + 1
+              SET INX-N TO 11 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0914 THRU 0925
-                 COMPUTE WS-N(I,12) = WS-N(I,12) + 1
+              SET INX-N TO 12 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0926
-                 COMPUTE WS-U(I,12) = WS-U(I,12) + 1              
+              SET INX-N TO 12 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1              
               WHEN 0927 THRU 1009
-                 COMPUTE WS-N(I,13) = WS-N(I,13) + 1
+              SET INX-N TO 13 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 1010
-                 COMPUTE WS-U(I,13) = WS-U(I,13) + 1
+              SET INX-N TO 13 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 1011 THRU 1022
-                 COMPUTE WS-N(I,14) = WS-N(I,14) + 1
+              SET INX-N TO 14 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 1023
-                 COMPUTE WS-U(I,14) = WS-U(I,14) + 1
-              WHEN 1024 THRU 1105
-                 COMPUTE WS-N(I,15) = WS-N(I,15) + 1
-              WHEN 1106
-                 COMPUTE WS-U(I,15) = WS-U(I,15) + 1
-              WHEN 1107 THRU 1118
-                 COMPUTE WS-N(I,16) = WS-N(I,16) + 1
-              WHEN 1119
-                 COMPUTE WS-U(I,16) = WS-U(I,16) + 1
-              WHEN 1120 THRU 1201
-                 COMPUTE WS-N(I,17) = WS-N(I,17) + 1
-              WHEN 1202
-                 COMPUTE WS-U(I,17) = WS-U(I,17) + 1              
-              WHEN 1203 THRU 1214
-                 COMPUTE WS-N(I,18) = WS-N(I,18) + 1
-              WHEN 1215
-                 COMPUTE WS-U(I,18) = WS-U(I,18) + 1
+              SET INX-N TO 14 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 1024 THRU 1105 
+              SET INX-N TO 15 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 1106 
+              SET INX-N TO 15 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 1107 THRU 1118 
+              SET INX-N TO 16 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 1119 
+              SET INX-N TO 16 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 1120 THRU 1201 
+              SET INX-N TO 17 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 1202 
+              SET INX-N TO 17 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1              
+              WHEN 1203 THRU 1214 
+              SET INX-N TO 18 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 1215 
+              SET INX-N TO 18 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 1216 THRU 1227 *> MULA
-                 COMPUTE WS-N(I,19) = WS-N(I,19) + 1
-              WHEN 1228
-                 COMPUTE WS-U(I,19) = WS-U(I,19) + 1
+              SET INX-N TO 19 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 1228 
+              SET INX-N TO 19 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
       *        WHEN 1229 THRU 0110 *> REVERTES DATE DECEMBER -> JANUARY
               WHEN 1229 THRU 1231  *> DEC-JUN
-                 COMPUTE WS-N(I,20) = WS-N(I,20) + 1
+                 SET INX-N TO 20 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0101 THRU 0110  *> DEV-JUN
-                 COMPUTE WS-N(I,20) = WS-N(I,20) + 1
-              WHEN 0111
-                 COMPUTE WS-U(I,20) = WS-U(I,20) + 1
+              SET INX-N TO 20 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 0111 
+              SET INX-N TO 20  
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0112 THRU 0123  *> UTTARA ASZADHA
-                 COMPUTE WS-N(I,21) = WS-N(I,21) + 1
+                 SET INX-N TO 21 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0124
-                 COMPUTE WS-U(I,21) = WS-U(I,21) + 1
+              SET INX-N TO 21 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0125 THRU 0205
-                 COMPUTE WS-N(I,22) = WS-N(I,22) + 1
+              SET INX-N TO 22 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0206
-                 COMPUTE WS-U(I,22) = WS-U(I,22) + 1              
+              SET INX-N TO 22 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1              
               WHEN 0207 THRU 0218
-                 COMPUTE WS-N(I,23) = WS-N(I,23) + 1
+              SET INX-N TO 23 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
               WHEN 0219
-                 COMPUTE WS-U(I,23) = WS-U(I,23) + 1
-              WHEN 0220 THRU 0303
-                 COMPUTE WS-N(I,24) = WS-N(I,24) + 1
-              WHEN 0304
-                 COMPUTE WS-U(I,24) = WS-U(I,24) + 1
-              WHEN 0305 THRU 0316
-                 COMPUTE WS-N(I,25) = WS-N(I,25) + 1
-              WHEN 0317
-                 COMPUTE WS-U(I,25) = WS-U(I,25) + 1
+              SET INX-N TO 23 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 0220 THRU 0303 
+              SET INX-N TO 24 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 0304 
+              SET INX-N TO 24 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 0305 THRU 0316 
+              SET INX-N TO 25 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 0317 
+              SET INX-N TO 25 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
               WHEN 0318 THRU 0330
-                 COMPUTE WS-N(I,26) = WS-N(I,26) + 1
-              WHEN 0331
-                 COMPUTE WS-U(I,26) = WS-U(I,26) + 1
-              WHEN 0401 THRU 0412
-                 COMPUTE WS-N(I,27) = WS-N(I,27) + 1
+              SET INX-N TO 26 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
+              WHEN 0331 
+              SET INX-N TO 26 
+                 COMPUTE WS-U(I,INX-N) = WS-U(I,INX-N) + 1
+              WHEN 0401 THRU 0412 
+              SET INX-N TO 27 
+                 COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
            END-EVALUATE
       * ---------------------------------------------------------------
       *TODO INSIDE ONE OF 27 N. PUTS GENDER,ALIVE STATUS
