@@ -779,8 +779,8 @@
       *    INDEXES
            *> YEAR, MONTH, DAY
            SET INX-SQ-Y UP BY 1 
-           SET INX-SQ-M UP BY 1 
-           SET INX-SQ-D UP BY 1 
+           SET INX-SQ-MD UP BY 1 
+      *     SET INX-SQ-D UP BY 1 
            *> GENDER, ALIVE
            SET INX-SQ-G UP BY 1 
            SET INX-SQ-A UP BY 1 
@@ -926,6 +926,9 @@
            AT END *> '10' EOF
            MOVE 'Y' TO WS-EOF-FLAG 
            NOT AT END 
+           *> TODO: IMPL VB HANDLING WHEN REC01 STRUCT STABILIZES
+           *> MOVE 2-4 BYTES TO REC01_LENGTH, 
+           *> MOVE DS-R(2-4:REC_L - 2-4) TO BUFFER 
            MOVE REC01-DS-R TO REC01 *>CHANGE TO REC-LENGTH FOR V
            *>CHECK CRC TODO 
            PERFORM PARA-CREATE-VIEW           
