@@ -895,10 +895,10 @@
        PARA-WRITE-TO-DATASET.
            OPEN EXTEND RECLOGW.  *> OUTPUT TO NOT ERASE EXISTING LOG
            EVALUATE LK-FS-W       *> FILE STATUS
-              WHEN 35           *> CAN NOT OPEN DS
+              WHEN '35'           *> CAN NOT OPEN DS
            DISPLAY 'WARNING: ',
-           'PRINTS TO SPOOL ONLY, CANNOT OPEN DATASET.'
-              WHEN 05           *> DS DOES NOT EXIST, CREATING NEW DS
+           'PRINT TO SPOOL ONLY, CANNOT OPEN DATASET.'
+              WHEN '05'           *> DS DOES NOT EXIST, CREATING NEW DS
            DISPLAY 'INFO:    ',
            'FIRST RUN, DATASET DOES NOT EXIST. CREATING NEW DATASET.'
            END-EVALUATE
@@ -906,14 +906,24 @@
            WRITE REC01-DS
            END-WRITE.
            CLOSE RECLOGW.
+           IF LK-FS-W NOT = '00'
+            DISPLAY 'WARNING: ',
+            'CLOSE INPUT RECLOGW FAILED WITH RC=', LK-FS-W 
+            *>STOP RUN
+           END-IF
            EXIT.
       ******************************************************************     
       *TODO: FEATURE IF JCL PARM IS (D,*) THEN READ FOR PRINT TO SPOOL
        PARA-READ-FROM-DATASET. 
            OPEN INPUT RECLOGR 
+           IF LK-FS-R NOT = '00'
+            DISPLAY 'PANIC: ',
+            'OPEN INPUT RECLOGR FAILED WITH RC=', LK-FS-R 
+            STOP RUN
+           END-IF
            PERFORM UNTIL WS-EOF-FLAG = 'Y' 
            READ REC01-DS-R INTO REC01 
-           AT END 
+           AT END *> '10' EOF
            MOVE 'Y' TO WS-EOF-FLAG 
            NOT AT END 
            MOVE REC01-DS-R TO REC01 *>CHANGE TO REC-LENGTH FOR V
@@ -922,6 +932,10 @@
            END-READ 
            END-PERFORM 
            CLOSE RECLOGR 
+           IF LK-FS-R NOT = '00'
+            DISPLAY 'WARNING: ',
+            'CLOSE INPUT RECLOGR FAILED WITH RC=', LK-FS-R 
+           END-IF
            EXIT. 
       ******************************************************************    
        PARA-SQL-ERROR-CHECK.
