@@ -72,25 +72,17 @@ sequenceDiagram
 
 ```mermaid
     sequenceDiagram
-    PGM(MQ)->>+DB2: SELECT lower date SQL
-    DB2->>-PGM(MQ): Sending data
-    PGM(MQ)->>+DB2: SELECT upper date SQL
-    DB2->>-PGM(MQ): Sending data
-    PGM(MQ)->>+DB2: 4x SELECT query
-    Note right of DB2: heavy workload...
-    Note left of PGM(MQ):fast processing the result
+    PGM(MQ)->>+DB2: SELECT lower & upper date SQL
     DB2->>-PGM(MQ): Sending data
     PGM(MQ)->>+DB2: SELECT MQ query
     Note right of DB2: heavy workload...
     Note left of PGM(MQ):fast processing the result
-    DB2->>-PGM(MQ): Sending data ROWSET=121
+    DB2->>-PGM(MQ): Sending data as single ROWSET=121
     Note over PGM(MQ),DB2:Multi Queries
-    Note right of DB2: heavy workload...
-    Note left of PGM(MQ):fast processing the result
     PGM(MQ)->>+DB2: SELECT MQ query
     Note right of DB2: heavy workload...
     Note left of PGM(MQ):fast processing the result
-    DB2->>-PGM(MQ): Sending data ROWSET=121    
+    DB2->>-PGM(MQ): Sending data as single ROWSET=121    
 ```
 
 ## Technologies
