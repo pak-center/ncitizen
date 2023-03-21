@@ -32,8 +32,8 @@ Afterwards, does the analytics and displays the statistics with horizontal bar v
 **The software has three operating modes:**
 | **Mode**| **Name** | **Efficiency** | **Calculations** | **Description** |
 |:---:|:---:|:---:|:---|:---|
-| `SQ` | Single SQL Query | worst | mostly APP side | uses ROWSET Processing = 3200 |
-| `MQ` | Multi SQL Queries | best | mostly DB side | uses ROWSET Processing = 121 |
+| `SQ` | Single SQL Query | worst | mostly APP side | use iterations ROWSET Processing = 3200 |
+| `MQ` | Multi SQL Queries | best | mostly DB side | use single ROWSET Processing = 121 |
 | `DS` | Dataset mode |n/a | only APP side | prints previously saved historical records to the SPOOL area |
 
 By design, it works on country identity documents and is limited to the size of the country's population. For global calculations it is necessary to correct the size of variables and add a list of databases from which data will be retrieved in turn or redesign DS mode and merge multiple records and PRINTS them as a single data sheet.
