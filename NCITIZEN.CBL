@@ -153,8 +153,18 @@
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
-         07 WS-QREC01-MQ-YEAR            PIC   S9(4)  COMP.
-         07 WS-QREC01-MQ-NR              PIC   S9(8)  COMP.
+        05 WS-QREC01-MG-SUMMARY.
+         07 WS-QREC01-MQ-AGE             PIC   S9(4)  COMP
+               OCCURS 121 TIMES.
+         07 WS-QREC01-MQ-TMALIVE         PIC   S9(8)  COMP
+               OCCURS 121 TIMES.
+        07 WS-QREC01-MQ-TFALIVE          PIC   S9(8)  COMP
+              OCCURS 121 TIMES.
+        07 WS-QREC01-MQ-TMDEAD           PIC   S9(8)  COMP
+              OCCURS 121 TIMES.
+        07 WS-QREC01-MQ-TFDEAD           PIC   S9(8)  COMP
+              OCCURS 121 TIMES.
+      * 
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
          07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(04) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-Y. 
@@ -255,7 +265,7 @@
       ******************************************************************
        01 WS-STATS.
         05 WS-MONTH-DAY               PIC   S9(4) COMP. 
-       01 WS-NC-FLAG                  PIC   S9(3)  COMP-5.
+       01 WS-NC-FLAG                  PIC   S9(3) COMP-5.
        01 WS-NU  PIC S9 BINARY VALUE 0.
        88 WS-NU-FLAG-N VALUE 0.
        88 WS-NU-FLAG-U VALUE 1.
@@ -276,29 +286,17 @@
            EXEC SQL  
               DECLARE CD01 CURSOR FOR 
               SELECT 
-              THIS_YEAR(CURRENT DATE) 
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
-           END-EXEC.
+              THIS_YEAR(CURRENT DATE),
       * --------------------------------------------------------------- 
       *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
-      * ---------------------------------------------------------------
-           EXEC SQL  
-              DECLARE CD02 CURSOR FOR 
-              SELECT 
-              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
+      * ---------------------------------------------------------------        
+              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS, 
+      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION        
+              DATE(:WS-QREC01-DATE-UPPER) + 
+              :WS-QREC01-INTERVAL-DECIMAL YEARS
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
            END-EXEC.
-      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION 
-            EXEC SQL  
-              DECLARE CD03 CURSOR FOR 
-              SELECT 
-              DATE(:WS-QREC01-DATE-UPPER) + 
-               :WS-QREC01-INTERVAL-DECIMAL YEARS 
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
-           END-EXEC.     
       ******************************************************************
       *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS TO PROCESSING
       *         WORST PERFORMANCE AND HEAVY LOAD   
@@ -306,16 +304,13 @@
            EXEC SQL 
               DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
               SELECT 
-              CAST(
-               (
-               (SELECT YEAR(CURRENT DATE) 
-                FROM SYSIBM.SYSDUMMY1 
-               ) - YEAR(BDATE)
-               ) AS SMALLINT), 
+              CAST( 
+              ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
+              YEAR(BDATE)) AS SMALLINT),
               *>AGE FROM YEAR(BDATE), 
               CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
-      *        CAST(MONTH(BDATE) AS SMALLINT),
-      *        CAST(DAY(BDATE) AS SMALLINT),
+      *       CAST(MONTH(BDATE) AS SMALLINT),
+      *       CAST(DAY(BDATE) AS SMALLINT),
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -333,26 +328,24 @@
       *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
       ******************************************************************
       * ---------------------------------------------------------------
-      *    DYNAMIC SQL SQUERY FOR TOTAL STATS SECTION 
-      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER) FOR EVERY INTERVAL
-      *    A,M A,F D,M D,F
+      *    MQ 01 SQL SQUERY FOR TOTAL STATS SECTION 
+      *    RUNS X1
       * ---------------------------------------------------------------
            EXEC SQL 
               DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
-              SELECT           *> FOR GLOBAL COUNT_BIG()
-              CAST(
-               (
-               (SELECT YEAR(CURRENT DATE) 
-                FROM SYSIBM.SYSDUMMY1 
-               ) - YEAR(BDATE)
-               ) AS SMALLINT), 
-               COUNT(YEAR(BDATE)) *>AS NR 
-              FROM CITIZENS 
-              WHERE 
-              ALIVE = :WS-QREC01-ALIVE 
-              AND 
-              GENDER = :WS-QREC01-GENDER 
-              AND 
+              SELECT CAST( 
+              ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
+              YEAR(BDATE)) AS SMALLINT),
+              sum(case when ALIVE = 'A' AND GENDER = 'M' then 1 
+                                            else 0 end) TMALIVE,
+              sum(case when ALIVE = 'A' AND GENDER = 'F' then 1 
+                                            else 0 end) TFALIVE,
+              sum(case when ALIVE = 'D' AND GENDER = 'M' then 1 
+                                            else 0 end) TMDEAD,
+              sum(case when ALIVE = 'D' AND GENDER = 'F' then 1 
+                                            else 0 end) TFDEAD
+              FROM CITIZEN
+              WHERE
               YEAR(BDATE) 
               BETWEEN 
               YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
@@ -362,23 +355,23 @@
               WS-QINTERVAL-DECIMAL YEARS 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
-           END-EXEC. 
-      ******************************************************************
+              END-EXEC              
+     ******************************************************************
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
       *    TODO
       * ---------------------------------------------------------------
-           EXEC SQL 
-              DECLARE MQ10 CURSOR WITH ROWSET POSITIONING FOR 
-              SELECT 
+      *     EXEC SQL 
+      *        DECLARE MQ10 CURSOR WITH ROWSET POSITIONING FOR 
+      *        SELECT 
               
-              FROM CITIZENS 
-              WHERE 
+      *        FROM CITIZENS 
+      *        WHERE 
 
       *        GROUP BY YEAR(BDATE)
-              FOR FETCH ONLY 
-           END-EXEC. 
+      *        FOR FETCH ONLY 
+      *     END-EXEC. 
 
       ******************************************************************
       *    END OF SQL VARIABLES & STRUCTURES
@@ -485,47 +478,19 @@
       *     
            EXEC SQL
            FETCH CD01 INTO 
-              :WS-QREC01-DATE-LOWER 
+              :WS-QREC01-DATE-LOWER, 
+              :WS-QREC01-DATE-UPPER, 
+              :WS-QREC01-DATE-UPPER-I 
            END-EXEC 
            PERFORM PARA-SQL-ERROR-CHECK 
            MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL 
+      *TODO: MORE MOVE -ADD IN LATER TIME
       *VERIFY
            EXEC SQL
               CLOSE CD01 
            END-EXEC.
            PERFORM PARA-SQL-ERROR-CHECK 
-      * ---------------------------------------------------------------  
-           EXEC SQL
-              OPEN CD02
-           END-EXEC. 
-           PERFORM PARA-SQL-ERROR-CHECK 
-      *     
-           EXEC SQL
-           FETCH CD02 INTO 
-              :WS-QREC01-DATE-UPPER 
-           END-EXEC        
-           PERFORM PARA-SQL-ERROR-CHECK 
-      *TODO
-           EXEC SQL
-              CLOSE CD02
-           END-EXEC.
-           PERFORM PARA-SQL-ERROR-CHECK 
-      * ---------------------------------------------------------------     
-           EXEC SQL
-              OPEN CD03
-           END-EXEC. 
-           PERFORM PARA-SQL-ERROR-CHECK 
-      *
-           EXEC SQL
-           FETCH CD03 INTO 
-              :WS-QREC01-DATE-UPPER-I 
-           END-EXEC 
-           PERFORM PARA-SQL-ERROR-CHECK 
-      *TODO
-           EXEC SQL
-              CLOSE CD03
-           END-EXEC.
-           PERFORM PARA-SQL-ERROR-CHECK 
+      * --------------------------------------------------------------- 
       ******************************************************************
            EXIT.
       ******************************************************************
@@ -577,7 +542,6 @@
       ******************************************************************
       *    EXEC SQL QUERIES FOM MULTI - BEST PERFORMANCE
       ******************************************************************
-      *     PERFORM  *> TODO
            EXEC SQL 
             OPEN MQ01 
            END-EXEC. 
@@ -592,11 +556,15 @@
       *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
       ******************************************************************
-            PERFORM UNTIL SQLCODE = 100 
+           PERFORM UNTIL SQLCODE = 100 
            EXEC SQL 
-            FETCH NEXT ROWSET FROM MQ01 FOR 121 ROWS INTO 
-            :WS-0QREC01-MQ-ROWSET-Y, 
-            :WS-0QREC01-MQ-ROWSET-NR 
+            FETCH NEXT ROWSET FROM MQ01 FOR 121 ROWS 
+            INTO 
+            :WS-QREC01-MQ-AGE, 
+            :WS-QREC01-MQ-TMALIVE,
+            :WS-QREC01-MQ-TFALIVE,
+            :WS-QREC01-MQ-TMDEAD,
+            :WS-QREC01-MQ-TFDEAD
            END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
       *    TODO: 121 SHOULD BE 1 ITER ONLY WITH NO LOOP NEEDED
@@ -604,8 +572,7 @@
            MOVE 201 TO WS-NC-FLAG
            PERFORM PARA-NAKSHATRA-COMPUTE 
       *----------------
-            END-PERFORM 
-      *      
+           END-PERFORM
            END-PERFORM 
       * ---------------------------------------------------------------
            EXEC SQL
@@ -943,6 +910,7 @@
             END-PERFORM 
       * ---------------------------------------------------------------
             WHEN 201   *>MQ01
+            *>AGE IF 0 THEN 1, >120 THEN 120 CHECK
       * ---------------------------------------------------------------
       *    MQ - MULTI QUERIES
       * ---------------------------------------------------------------    
