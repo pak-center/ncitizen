@@ -159,106 +159,12 @@
          07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(04) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-Y. 
          07 WS-0QREC01-MQ-ROWSET-NR PIC S9(08) COMP *>INT DB2
-               OCCURS 121 TIMES INDEXED BY INX-MQ-N.         
-      * ---------------------------------------------------------------
+               OCCURS 121 TIMES INDEXED BY INX-MQ-N.     
+      * ---------------------------------------------------------------         
            EXEC SQL END DECLARE SECTION 
-           END-EXEC. 
-      ******************************************************************
-      *    INITIALIZE VARIABLES FOR SQL EXECS
-      ******************************************************************
-      * --------------------------------------------------------------- 
-      *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
-      * ---------------------------------------------------------------
-           EXEC SQL  
-              DECLARE CD01 CURSOR FOR 
-              SELECT 
-              THIS_YEAR(CURRENT DATE) 
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
-           END-EXEC.
-      * --------------------------------------------------------------- 
-      *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
-      * ---------------------------------------------------------------
-           EXEC SQL  
-              DECLARE CD02 CURSOR FOR 
-              SELECT 
-              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
-           END-EXEC.
-      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION 
-            EXEC SQL  
-              DECLARE CD03 CURSOR FOR 
-              SELECT 
-              DATE(:WS-QREC01-DATE-UPPER) + 
-               :WS-QREC01-INTERVAL-DECIMAL YEARS 
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
            END-EXEC.     
-      ******************************************************************
-      *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS FOR PROCESSING
-      *         WORST PERFORMANCE AND HEAVY LOAD   
-      ******************************************************************
-           EXEC SQL 
-              DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
-              SELECT 
-              CAST((YEAR(CURRENT DATE) - YEAR(BDATE)) AS SMALLINT), 
-              *>AGE FROM YEAR(BDATE), 
-              CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
-      *        CAST(MONTH(BDATE) AS SMALLINT),
-      *        CAST(DAY(BDATE) AS SMALLINT),
-              GENDER, 
-              ALIVE 
-              FROM CITIZENS 
-              WHERE YEAR(BDATE) 
-              BETWEEN 
-              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
-              :WS-QREC01-INTERVAL-DECIMAL)) *>MUST BE NEGATIVE, *(-1)
-              AND 
-              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
-              :WS-QREC01-INTERVAL-DECIMAL)) 
-              FOR FETCH ONLY 
-           END-EXEC.  
-      ******************************************************************
-      *    MQ - ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
-      *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
-      ******************************************************************
       * ---------------------------------------------------------------
-      *    DYNAMIC SQL SQUERY FOR TOTAL STATS SECTION 
-      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER) FOR EVERY INTERVAL
-      *    A,M A,F D,M D,F
-      * ---------------------------------------------------------------
-           EXEC SQL 
-              DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
-              SELECT *> FOR GLOBAL COUNT_BIG()
-              CAST(YEAR(BDATE) AS SMALLINT), COUNT(YEAR(BDATE)) *>AS NR 
-              FROM CITIZENS 
-              WHERE 
-              ALIVE = :WS-QREC01-ALIVE 
-              AND 
-              GENDER = :WS-QREC01-GENDER 
-              AND 
-              YEAR(BDATE) 
-              BETWEEN 
-              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              WS-QINTERVAL-DECIMAL YEARS 
-              AND 
-              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              WS-QINTERVAL-DECIMAL YEARS 
-              GROUP BY YEAR(BDATE) 
-              FOR FETCH ONLY 
-           END-EXEC. 
-      ******************************************************************
-      *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
-      *         WITH VARIABLES
-      ******************************************************************
-      *    TODO
-      * ---------------------------------------------------------------
-
-
-      ******************************************************************
-      *    END OF SQL VARIABLES & STRUCTURES
-      ****************************************************************** 
+       
       ******************************************************************       
       *    RECORDS RELATED WITH FD AND RECORDS INSIDE DATASET
       *    STRUCTURE IS BINARY
@@ -360,6 +266,123 @@
       *    FOR ABEND CALL ROUTINE TO BETTER DBG (SQL QUERY ERROR) 
        01  ABEND-CODE                 PIC   S9(9) BINARY.
        01  TIMING                     PIC   S9(9) BINARY.
+      *
+      ******************************************************************
+      *    INITIALIZE VARIABLES FOR SQL EXECS
+      ******************************************************************
+      * --------------------------------------------------------------- 
+      *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
+      * ---------------------------------------------------------------
+           EXEC SQL  
+              DECLARE CD01 CURSOR FOR 
+              SELECT 
+              THIS_YEAR(CURRENT DATE) 
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.
+      * --------------------------------------------------------------- 
+      *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
+      * ---------------------------------------------------------------
+           EXEC SQL  
+              DECLARE CD02 CURSOR FOR 
+              SELECT 
+              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS  
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.
+      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION 
+            EXEC SQL  
+              DECLARE CD03 CURSOR FOR 
+              SELECT 
+              DATE(:WS-QREC01-DATE-UPPER) + 
+               :WS-QREC01-INTERVAL-DECIMAL YEARS 
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.     
+      ******************************************************************
+      *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS TO PROCESSING
+      *         WORST PERFORMANCE AND HEAVY LOAD   
+      ******************************************************************
+           EXEC SQL 
+              DECLARE SQ01 CURSOR WITH ROWSET POSITIONING FOR  
+              SELECT 
+              CAST(
+               (
+               (SELECT YEAR(CURRENT DATE) 
+                FROM SYSIBM.SYSDUMMY1 
+               ) - YEAR(BDATE)
+               ) AS SMALLINT), 
+              *>AGE FROM YEAR(BDATE), 
+              CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
+      *        CAST(MONTH(BDATE) AS SMALLINT),
+      *        CAST(DAY(BDATE) AS SMALLINT),
+              GENDER, 
+              ALIVE 
+              FROM CITIZENS 
+              WHERE YEAR(BDATE) 
+              BETWEEN 
+              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
+              :WS-QREC01-INTERVAL-DECIMAL)) *>MUST BE NEGATIVE, *(-1)
+              AND 
+              YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
+              :WS-QREC01-INTERVAL-DECIMAL)) 
+              FOR FETCH ONLY 
+           END-EXEC.  
+      ******************************************************************
+      *    MQ - ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
+      *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
+      ******************************************************************
+      * ---------------------------------------------------------------
+      *    DYNAMIC SQL SQUERY FOR TOTAL STATS SECTION 
+      *    RUNS X4 INSIDE LOOP (ALIVE, GENDER) FOR EVERY INTERVAL
+      *    A,M A,F D,M D,F
+      * ---------------------------------------------------------------
+           EXEC SQL 
+              DECLARE MQ01 CURSOR WITH ROWSET POSITIONING FOR 
+              SELECT           *> FOR GLOBAL COUNT_BIG()
+              CAST(
+               (
+               (SELECT YEAR(CURRENT DATE) 
+                FROM SYSIBM.SYSDUMMY1 
+               ) - YEAR(BDATE)
+               ) AS SMALLINT), 
+               COUNT(YEAR(BDATE)) *>AS NR 
+              FROM CITIZENS 
+              WHERE 
+              ALIVE = :WS-QREC01-ALIVE 
+              AND 
+              GENDER = :WS-QREC01-GENDER 
+              AND 
+              YEAR(BDATE) 
+              BETWEEN 
+              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+              WS-QINTERVAL-DECIMAL YEARS 
+              AND 
+              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+              WS-QINTERVAL-DECIMAL YEARS 
+              GROUP BY YEAR(BDATE) 
+              FOR FETCH ONLY 
+           END-EXEC. 
+      ******************************************************************
+      *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
+      *         WITH VARIABLES
+      ******************************************************************
+      *    TODO
+      * ---------------------------------------------------------------
+           EXEC SQL 
+              DECLARE MQ10 CURSOR WITH ROWSET POSITIONING FOR 
+              SELECT 
+              
+              FROM CITIZENS 
+              WHERE 
+
+      *        GROUP BY YEAR(BDATE)
+              FOR FETCH ONLY 
+           END-EXEC. 
+
+      ******************************************************************
+      *    END OF SQL VARIABLES & STRUCTURES
+      ******************************************************************
       ******************************************************************
        LINKAGE SECTION.
        01 PARM-BUFFER.
@@ -509,6 +532,7 @@
       *    PARAGRAPH SQL SQ     
       ******************************************************************     
        PARA-SQL-SQ.    
+      * 
            EXEC SQL
               OPEN SQ01 
            END-EXEC.
@@ -575,9 +599,10 @@
             :WS-0QREC01-MQ-ROWSET-NR 
            END-EXEC  
            PERFORM PARA-SQL-ERROR-CHECK 
-      *    TODO LOOP FOR 121 ROWS TO COUNT
+      *    TODO: 121 SHOULD BE 1 ITER ONLY WITH NO LOOP NEEDED
       *----------------
-      *     PERFORM PARA-NAKSHATRA-COMPUTE 
+           MOVE 201 TO WS-NC-FLAG
+           PERFORM PARA-NAKSHATRA-COMPUTE 
       *----------------
             END-PERFORM 
       *      
@@ -903,7 +928,7 @@
       *---------------------------------------------------------------
             COMPUTE WS-SQ-INX01 = WS-SQ-INX01 - 1 
             IF WS-SQ-INX01 <= 0 THEN 
-             EXIT PERFORM 
+              EXIT PERFORM 
             END-IF 
       *---------------------------------------------------------------
       *    INDEXES
@@ -918,6 +943,10 @@
             END-PERFORM 
       * ---------------------------------------------------------------
             WHEN 201   *>MQ01
+      * ---------------------------------------------------------------
+      *    MQ - MULTI QUERIES
+      * ---------------------------------------------------------------    
+
       * ---------------------------------------------------------------      
             CONTINUE 
       * ---------------------------------------------------------------
