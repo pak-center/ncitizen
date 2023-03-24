@@ -19,7 +19,7 @@
 * [Installation](#installation)
 * [Features](#features)
 * [Run the Project](#run-the-project)
-* [TOO](#todo)
+* [TODO](#todo)
 * [License](#license)
 
 ## General info
