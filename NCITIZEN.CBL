@@ -222,7 +222,13 @@
            25 REC01-NTAB-UNKNOWN-FEMALE    PIC 9(9) COMP-5. 
       
       * ---------------------------------------------------------------
-        05 REC01-TOTAL-SUMMARY.   
+        05 REC01-TOTAL-SUMMARY. 
+         10 REC01-AGE-SUMM OCCURS 120 TIMES INDEXED BY INX-AGE-SUMM. 
+          15 REC01-TMALIVE   PIC   9(9) COMP-5. 
+          15 REC01-TFALIVE   PIC   9(9) COMP-5.
+          15 REC01-TMDEAD    PIC   9(9) COMP-5.
+          15 REC01-TFDEAD    PIC   9(9) COMP-5.
+      * BELOW SUM OF ALL 120 TABLES OR JUST USE LOOP?
       *   10 REC01-T-CITIZEN                PIC   9(9) COMP-5.
          10 REC01-T-CITIZEN-ALIVE          PIC   9(9) COMP-5.
          10 REC01-T-CITIZEN-ALIVE-MALE     PIC   9(9) COMP-5.
@@ -371,7 +377,7 @@
       *    TODO
       * ---------------------------------------------------------------
       *     EXEC SQL 
-      *        DECLARE MQ10 CURSOR WITH ROWSET POSITIONING FOR 
+      *        DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
       *        SELECT 
               
       *        FROM CITIZENS 
@@ -561,7 +567,7 @@
             UNTIL WS-SQL-MQ-I > 120
               *>TODO NEED PARAM CHANGE E.G. GENDER M OR F
       ******************************************************************
-      *    4 QUERIES FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
+      *    X1 QUERY FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
       ******************************************************************
            PERFORM UNTIL SQLCODE = 100 
@@ -919,9 +925,30 @@
       * ---------------------------------------------------------------
             WHEN 201   *>MQ01
             *>AGE IF 0 THEN 1, >120 THEN 120 CHECK
+            IF WS-QREC01-MQ-AGE = ZERO 
+            MOVE 1 TO WS-QREC01-MQ-AGE 
+            END-IF 
+            IF WS-QREC01-MQ-AGE > 120 
+            MOVE 120 TO WS-QREC01-MQ-AGE 
+            END-IF 
+           IF WS-QREC01-MQ-AGE < 0 THEN  
+            DISPLAY 'WARNING: MQ_AGE IS NEGATIVE. CHECK DB2? ', 
+                    'AGE SET TO 1' 
+            MOVE 1 TO WS-QREC01-MQ-AGE 
+           END-IF
+           SET INX-AGE-SUMM TO WS-QREC01-MQ-AGE 
+           
+           MOVE WS-QREC01-MQ-TMALIVE TO REC01-TMALIVE(INX-AGE-SUMM) 
+           MOVE WS-QREC01-MQ-TFALIVE TO REC01-TFALIVE(INX-AGE-SUMM) 
+           MOVE WS-QREC01-MQ-TMDEAD TO REC01-TMDEAD(INX-AGE-SUMM) 
+           MOVE WS-QREC01-MQ-TFDEAD TO REC01-TFDEAD(INX-AGE-SUMM) 
+
+           *>ADD IN LOOP TO TOTAL?
+
       * ---------------------------------------------------------------
       *    MQ - MULTI QUERIES
       * ---------------------------------------------------------------    
+           WHEN 202
 
       * ---------------------------------------------------------------      
             CONTINUE 
