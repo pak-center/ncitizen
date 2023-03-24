@@ -142,8 +142,6 @@
                OCCURS 3200 TIMES INDEXED BY INX-SQ-Y. 
          10 WS-QREC01-SQ-ROWSET-MD        PIC S9(04) COMP *>INT DB2
                OCCURS 3200 TIMES INDEXED BY INX-SQ-MD. 
-      *   10 WS-QREC01-SQ-ROWSET-D        PIC S9(04) COMP *>INT DB2
-      *         OCCURS 2300 TIMES INDEXED BY INX-SQ-D. 
          10 WS-QREC01-SQ-ROWSET-GENDER   PIC X     OCCURS 3200 TIMES
                                                    INDEXED BY INX-SQ-G.  
          10 WS-QREC01-SQ-ROWSET-ALIVE    PIC X     OCCURS 3200 TIMES
@@ -321,10 +319,8 @@
               CAST( 
               ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
               YEAR(BDATE)) AS SMALLINT),
-              *>AGE FROM YEAR(BDATE), 
+              *>UP: AGE FROM YEAR(BDATE), 
               CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
-      *       CAST(MONTH(BDATE) AS SMALLINT),
-      *       CAST(DAY(BDATE) AS SMALLINT),
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -350,13 +346,13 @@
               SELECT CAST( 
               ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
               YEAR(BDATE)) AS SMALLINT),
-              sum(case when ALIVE = 'A' AND GENDER = 'M' then 1 
+              SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'M' THEN 1 
                                             else 0 end), *> TMALIVE,
-              sum(case when ALIVE = 'A' AND GENDER = 'F' then 1 
+              SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'F' THEN 1 
                                             else 0 end), *> TFALIVE,
-              sum(case when ALIVE = 'D' AND GENDER = 'M' then 1 
+              SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'M' THEN 1 
                                             else 0 end), *> TMDEAD,
-              sum(case when ALIVE = 'D' AND GENDER = 'F' then 1 
+              SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'F' THEN 1 
                                             else 0 end) *>TFDEAD
               FROM CITIZEN 
               WHERE 
@@ -409,7 +405,7 @@
             PERFORM PARA-READ-FROM-DATASET 
             PERFORM PARA-CREATE-VIEW 
            WHEN 2 THRU 6 ALSO 'SQ' 
-              *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY
+              *> SLOW & NOT EFFICIENT (SINGLE) SQL QUERY (LOOP)
             PERFORM PARA-VALIDATE-ARGS  
             PERFORM PARA-SQL-DATE-DB2 
             PERFORM PARA-SQL-SQ *> (PARA-NAKSHATRA-COMPUTE INSIDE)
@@ -418,7 +414,6 @@
             PERFORM PARA-WRITE-TO-DATASET
            WHEN 2 THRU 6 ALSO 'MQ' 
               *> FASTER & EFFCIENT SQL (MULTI) QUERIES
-              *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
             PERFORM PARA-VALIDATE-ARGS 
             PERFORM PARA-SQL-DATE-DB2  
             PERFORM PARA-SQL-MQ 
@@ -537,7 +532,7 @@
       ******************************************************************
       *    COMPUTES NAKSHATRA 
       ******************************************************************
-           PERFORM PARA-NAKSHATRA-COMPUTE *>TODO FOR ROWSET!
+           PERFORM PARA-NAKSHATRA-COMPUTE 
            END-PERFORM
 
       ******************************************************************        
@@ -565,7 +560,6 @@
             VARYING WS-SQL-MQ-I
             FROM REC01-INTERVAL-COUNT BY REC01-INTERVAL-COUNT
             UNTIL WS-SQL-MQ-I > 120
-              *>TODO NEED PARAM CHANGE E.G. GENDER M OR F
       ******************************************************************
       *    X1 QUERY FOR SUMMARY RAPORT WITH GENDER AND ALIVE STATUS 
       *    TOTAL CITIZENS COUNT 
@@ -607,9 +601,6 @@
       *    EXTRACT AGE FROM CURRENT YEAR - YEAR-OF-BIRTH AND +1 TO 
       *    AGE OCCURS 120 PIC 9(8) COMP-5. WITH INDEX 
       ******************************************************************        
-           *>TODO:
-           *> LEGACY CODE MODIFY IT FOR ROWSET SUPPORT TOMORROW
-           *> MOVE TO LOOP FOR ARRAY_2000 !
            EVALUATE WS-NC-FLAG 
       * ---------------------------------------------------------------
       *    SQ 01
@@ -872,7 +863,6 @@
                  COMPUTE WS-N(I,INX-N) = WS-N(I,INX-N) + 1
            END-EVALUATE
       * ---------------------------------------------------------------
-      *TODO INSIDE ONE OF 27 N. PUTS GENDER,ALIVE STATUS
            EVALUATE WS-QREC01-SQ-ROWSET-ALIVE(INX-SQ-A) 
             WHEN 'A' 
              EVALUATE WS-QREC01-SQ-ROWSET-GENDER(INX-SQ-G) ALSO 
@@ -913,11 +903,9 @@
             END-IF 
       *---------------------------------------------------------------
       *    INDEXES
-           *> YEAR, MONTH, DAY
            SET INX-SQ-Y UP BY 1 
            SET INX-SQ-MD UP BY 1 
-      *     SET INX-SQ-D UP BY 1 
-           *> GENDER, ALIVE
+           *>         GENDER, ALIVE
            SET INX-SQ-G UP BY 1 
            SET INX-SQ-A UP BY 1 
       * ---------------------------------------------------------------         
