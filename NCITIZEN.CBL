@@ -1039,6 +1039,8 @@
            EXIT.
       ******************************************************************
       *    PERFORM PARA-H-BAR-GEN WITH SET WS-HBAR-TMP1 & WS-HBAR-TMP2
+      *    E.G.  % OF FEMALES = CITIZENS     / FEMALES
+      *                         WS-HBAR-TMP1 / WS-HBAR-TMP2
        PARA-H-BAR-GEN. 
            IF WS-HBAR-TMP2 NOT = ZERO THEN 
            COMPUTE WS-HBAR-TMP1 ROUNDED = 
