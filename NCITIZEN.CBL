@@ -123,7 +123,7 @@
       *  05 WS-QREC01-DATE-DB2       PIC   X(10). *> CHAR FOR DB2 DATE
       * ---------------------------------------------------------------
         05 WS-QREC01-COMMON. 
-         07 WS-QREC01-INTERVAL-DECIMAL   PIC   S999 COMP-3 VALUE 10.
+         07 WS-QREC01-INTERVAL-DECIMAL    PIC   S999 COMP-3 VALUE 10.
       * ---------------------------------------------------------------   
          07 WS-QREC01-GENDER              PIC   X. *> DB2 CHAR  
          88 WS-QREC01-GENDER-FLAG-MALE    VALUE 'M'. 
@@ -134,7 +134,7 @@
          88 WS-QREC01-ALIVE-FLAG-DEAD     VALUE 'D'. 
       * ---------------------------------------------------------------   
         05 WS-QREC01-SQ.
-         07 WS-QREC01-SQ-DATE            PIC   X(10).
+         07 WS-QREC01-SQ-DATE             PIC   X(10). 
       *   07 WS-QREC01-DATE-CURRENT-DB2   PIC   X(10).
       *    TABLE FOR ROWSET PROCESSING FOR SQ QUERY
         05 WS-QREC01-SQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
@@ -166,9 +166,9 @@
               OCCURS 121 TIMES.
       * 
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
-         07 WS-0QREC01-MQ-ROWSET-Y   PIC S9(04) COMP *>INT DB2
+         07 WS-0QREC01-MQ-ROWSET-Y       PIC S9(04) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-Y. 
-         07 WS-0QREC01-MQ-ROWSET-NR PIC S9(08) COMP *>INT DB2
+         07 WS-0QREC01-MQ-ROWSET-NR      PIC S9(08) COMP *>INT DB2
                OCCURS 121 TIMES INDEXED BY INX-MQ-N.     
       * ---------------------------------------------------------------         
            EXEC SQL END DECLARE SECTION 
@@ -184,13 +184,13 @@
       * ---------------------------------------------------------------
         05 REC01-HEADER.
          10 REC01-RLENGTH         PIC   9(4) COMP-5. *> 65535
-         10 FILLER                 PIC   X(76).
+         10 FILLER                PIC   X(76). 
          10 REC01-CRC             PIC   A(30) VALUE 
                                    'AUTHOR: PRZEMYSLAW ADAM KUPISZ'.
          10 REC01-HLINE           PIC   X(80) VALUES ALL '*'.
          10 REC01-PGM.
           15 REC01-PGM-START-DATE PIC   99(4)/99/99.
-         10 FILLER                 PIC   X(40) VALUES ALL '@'.
+         10 FILLER                PIC   X(40) VALUES ALL '@'.
       *
          10 REC01-USER            PIC   X(8).  
       *   10 REC01-CURRENT-DATE-DB2    PIC   X(10).           
@@ -207,19 +207,19 @@
       *    20 REC01-MALE           PIC   9(9) COMP-5. *>(18) MAX
       *    20 REC01-FEMALE         PIC   9(9) COMP-5.
          15 REC01-NTAB OCCURS 27 TIMES INDEXED BY INX-N. 
-          20 WS-N                  PIC   9(9) COMP-5.
-          20 WS-U                  PIC   9(9) COMP-5.
+          20 WS-N                          PIC   9(9) COMP-5.
+          20 WS-U                          PIC   9(9) COMP-5.
           20 REC01-NTAB-AGE OCCURS 120 TIMES INDEXED BY INX-AGE. 
       *     25 REC01-NTAB-AGE      PIC 9(9) COMP-5. 
       *     25 REC01-NTAB-AGE-U    PIC 9(9) COMP-5. 
           23 REC01-NTAB-CITIZEN OCCURS 2 TIMES. *> INDEXED BY INX-AC. 
           *> 1-ALIVE,2-DEAD
-           25 REC01-NTAB-CITIZEN-MALE   PIC 9(9) COMP-5. 
-           25 REC01-NTAB-CITIZEN-FEMALE PIC 9(9) COMP-5. 
+           25 REC01-NTAB-CITIZEN-MALE      PIC 9(9) COMP-5. 
+           25 REC01-NTAB-CITIZEN-FEMALE    PIC 9(9) COMP-5. 
           23 REC01-NTAB-UNKNOWN OCCURS 2 TIMES. *> INDEXED BY INX-AU. 
           *> 1-ALIVE,2-DEAD
-           25 REC01-NTAB-UNKNOWN-MALE   PIC 9(9) COMP-5. 
-           25 REC01-NTAB-UNKNOWN-FEMALE PIC 9(9) COMP-5. 
+           25 REC01-NTAB-UNKNOWN-MALE      PIC 9(9) COMP-5. 
+           25 REC01-NTAB-UNKNOWN-FEMALE    PIC 9(9) COMP-5. 
       
       * ---------------------------------------------------------------
         05 REC01-TOTAL-SUMMARY.   
@@ -337,15 +337,15 @@
               ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
               YEAR(BDATE)) AS SMALLINT),
               sum(case when ALIVE = 'A' AND GENDER = 'M' then 1 
-                                            else 0 end) TMALIVE,
+                                            else 0 end), *> TMALIVE,
               sum(case when ALIVE = 'A' AND GENDER = 'F' then 1 
-                                            else 0 end) TFALIVE,
+                                            else 0 end), *> TFALIVE,
               sum(case when ALIVE = 'D' AND GENDER = 'M' then 1 
-                                            else 0 end) TMDEAD,
+                                            else 0 end), *> TMDEAD,
               sum(case when ALIVE = 'D' AND GENDER = 'F' then 1 
-                                            else 0 end) TFDEAD
-              FROM CITIZEN
-              WHERE
+                                            else 0 end) *>TFDEAD
+              FROM CITIZEN 
+              WHERE 
               YEAR(BDATE) 
               BETWEEN 
               YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
@@ -355,8 +355,8 @@
               WS-QINTERVAL-DECIMAL YEARS 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
-              END-EXEC              
-     ******************************************************************
+           END-EXEC              
+      ******************************************************************
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
@@ -405,30 +405,30 @@
            WHEN 2 THRU 6 ALSO 'MQ' 
               *> FASTER & EFFCIENT SQL (MULTI) QUERIES
               *> BUT NEEDS A LOT OF EXEC SQL FOR NAKSHATRAS
-            PERFORM PARA-VALIDATE-ARGS
-            PERFORM PARA-SQL-DATE-DB2 
-            PERFORM PARA-SQL-MQ
-            PERFORM PARA-ANALYSE-DATA
-            PERFORM PARA-CREATE-VIEW
-            PERFORM PARA-WRITE-TO-DATASET
+            PERFORM PARA-VALIDATE-ARGS 
+            PERFORM PARA-SQL-DATE-DB2  
+            PERFORM PARA-SQL-MQ 
+            PERFORM PARA-ANALYSE-DATA 
+            PERFORM PARA-CREATE-VIEW 
+            PERFORM PARA-WRITE-TO-DATASET 
            WHEN OTHER 
-            DISPLAY 'WARNING: WRONG PARM IN JCL. PARM=',
-             PARM-DATA(1:PARM-LENGTH)
+            DISPLAY 'WARNING: WRONG PARM IN JCL. PARM=', 
+             PARM-DATA(1:PARM-LENGTH) 
             DISPLAY ' NOTHING TO DO... SORRY. EXITS PGM' 
             MOVE 2 TO RETURN-CODE 
-           END-EVALUATE   
+           END-EVALUATE 
       * ---------------------------------------------------------------
       D    DISPLAY 'DEBUG: RC=', RETURN-CODE
            STOP RUN.
       ******************************************************************
       *    STOP RUN PGM
       ******************************************************************
-       PARA-VALIDATE-ARGS.
+       PARA-VALIDATE-ARGS. 
       ******************************************************************
       *    TEXT TO NUMERIC CONVERSION & LENGTH CHECK 1-120
       ******************************************************************     
            COMPUTE WS-PGM-INTERVAL-VAL = 
-           FUNCTION NUMVAL(PARM-DATA(4:(PARM-LENGTH - 3)))
+           FUNCTION NUMVAL(PARM-DATA(4:(PARM-LENGTH - 3)))  
            IF NOT (WS-PGM-INTERVAL-VAL > 0 AND 
             WS-PGM-INTERVAL-VAL <= 120)
             MOVE 10 TO WS-PGM-INTERVAL-VAL *> SETS DEFAULT INTERVAL
@@ -450,7 +450,7 @@
       *    DIVIDE 120 BY INTERVAL-VAL  
       *    CHECKING OF CORRECTIVNESS FOR DIVIDE
       * ---------------------------------------------------------------
-           PERFORM UNTIL WS-PGM-REMINDER = 0
+           PERFORM UNTIL WS-PGM-REMINDER = 0 
            DIVIDE 120 BY WS-PGM-INTERVAL-VAL 
            GIVING WS-PGM-RESULT REMAINDER WS-PGM-REMINDER
            IF WS-PGM-REMINDER IS NOT ZERO THEN
@@ -1015,6 +1015,19 @@
            DISPLAY REC01-HLINE
            EXIT.
       ******************************************************************
+      *    PERFORM PARA-H-BAR-GEN WITH SET WS-HBAR-TMP1 & WS-HBAR-TMP2
+       PARA-H-BAR-GEN. 
+           COMPUTE WS-HBAR-TMP1 = (WS-HBAR-TMP1 / WS-HBAR-TMP2) * 100 
+           *> ROUND TO INT
+           *> COMPUTE WS-HBAR-TMP1 = 
+           *> SET % LENGTH, MAYBE 60 FROM 80 CHARS OR 40 ?
+           PERFORM WS-HBAR-TMP1 TIMES 
+           INSPECT WS-HBAR TALLYING WS-HBAR-TMP1 FOR 
+                           REPLACING FIRST ' ' BY '#'  
+           END-PERFORM
+           DISPLAY WS-HBAR
+           INSPECT WS-HBAR REPLACING ALL '#' BY ' '
+           EXIT.       
        PARA-WRITE-TO-DATASET.
            OPEN EXTEND RECLOGW.  *> OUTPUT TO NOT ERASE EXISTING LOG
            EVALUATE LK-FS-W       *> FILE STATUS
