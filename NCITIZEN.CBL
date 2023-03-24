@@ -270,12 +270,13 @@
        88 WS-NU-FLAG-N VALUE 0.
        88 WS-NU-FLAG-U VALUE 1.
       ******************************************************************
-      *    TMP WORK VARIABLES FOR PARA-H-BAR-GERN
+      *    TMP WORK VARIABLES FOR PARA-H-BAR-GEN
        01 WS-HBAR-GEN.
-        05 WS-HBAR-TMP1            COMP-1.
-        05 WS-HBAR-TMP2            COMP-1.
-        05 WS-HBAR-INT    PIC 9(4) COMP-5.
-        05 WS-HBAR        PIC X(80) VALUES ALL ' '.
+        05 WS-HBAR-TMP1             COMP-2.
+        05 WS-HBAR-TMP2   PIC 9(9)  COMP-5.
+        05 WS-HBAR-LEFT   PIC X(15) VALUE      '*****      0% |'.
+        05 WS-HBAR        PIC X(50) VALUES ALL ' '.
+        05 WS-HBAR-RIGHT  PIC X(15) VALUE      '| 100%    *****'.
       ******************************************************************
       *    FS
        01 WS-EOF-FLAG                 PIC   A.
@@ -1024,18 +1025,20 @@
       ******************************************************************
       *    PERFORM PARA-H-BAR-GEN WITH SET WS-HBAR-TMP1 & WS-HBAR-TMP2
        PARA-H-BAR-GEN. 
-           COMPUTE WS-HBAR-TMP1 = (WS-HBAR-TMP1 / WS-HBAR-TMP2) * 100 
-           *> ROUND TO INT
-           *> COMPUTE WS-HBAR-TMP1 = 
-           *> SET % LENGTH, MAYBE 60 FROM 80 CHARS OR 40 ?
-           *> ROUND WS-HBAR-TMP1 TO WS-HBAR-INT
-           *> PERFORM WS-HBAR-INT TIMES 
-           INSPECT WS-HBAR TALLYING WS-HBAR-INT FOR 
+           IF WS-HBAR-TMP2 NOT = ZERO THEN 
+           COMPUTE WS-HBAR-TMP1 ROUNDED = 
+                  (WS-HBAR-TMP1 / WS-HBAR-TMP2) * 100 
+           DIVIDE WS-HBAR-TMP1 BY 2 GIVING WS-HBAR-TMP2
+      *     
+           INSPECT WS-HBAR TALLYING WS-HBAR-TMP2 FOR 
                            REPLACING FIRST ' ' BY '#'  
-           *> END-PERFORM
-           DISPLAY WS-HBAR
+      *
+           DISPLAY WS-HBAR-LEFT, WS-HBAR, WS-HBAR-RIGHT 
            INSPECT WS-HBAR REPLACING ALL '#' BY ' '
-           EXIT.       
+           ELSE
+           DISPLAY WS-HBAR-LEFT, WS-HBAR, WS-HBAR-RIGHT 
+           END-IF 
+           EXIT. 
        PARA-WRITE-TO-DATASET.
            OPEN EXTEND RECLOGW.  *> OUTPUT TO NOT ERASE EXISTING LOG
            EVALUATE LK-FS-W       *> FILE STATUS
