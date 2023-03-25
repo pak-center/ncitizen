@@ -97,7 +97,7 @@ Project is created with:
 
 * Available z/OS COBOL compiler PTF
 * DB2 Database
-* QSAM dataset access
+* QSAM dataset
 
 ## Features
 
@@ -107,12 +107,12 @@ SINGLE FILE CODE (NO INCLUDES, NO COPYBOOKS, NO CALLS)
 | :---          | :---       | :---:       |
 | SLOW SQL SQ   | ########## | Completed   |
 | ROWSET for SQ | ########## | Completed   |
-| FAST SQL MQ   | ####       | In Progress |
-| ROWSET for MQ | ##         | In Progress |
+| FAST SQL MQ   | #####      | In Progress |
+| ROWSET for MQ | ####       | In Progress |
 | QSAM WRITE    | ########## | Completed   |
 | QSAM READ     | #########  | In Progress |
-| PRINT STATS   | ##         | In Progress |
-| H-BAR CHARTS  | #          | In Progress |
+| PRINT STATS   | ###        | In Progress |
+| H-BAR CHARTS  | ####       | In Progress |
 | Beautify code | ###        | In Progress |
 
 ## Run the Project
