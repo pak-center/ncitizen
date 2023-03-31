@@ -370,7 +370,9 @@
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
-      *    TODO: DEFINE VAR & CREATE TABLE FOR LOOP, 27 X2
+      *    TODO: USE SUBQUERY & CREATE TABLE FOR LOOP, 27 X2
+      *    LIKE: MONTH(BDATE) = :VAR1L AND DAY(BDATE) > VAR2L
+      *    LIKE: MONTH(BDATE) = :VAR1U AND DAY(BDATE) < VAR2U
       * ---------------------------------------------------------------
            EXEC SQL 
               DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
@@ -389,18 +391,10 @@
               WHERE BDATE 
               BETWEEN 
               YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              WS-QINTERVAL-DECIMAL YEARS + 
-              *>TODO: DEFINE VAR & CREATE TABLE FOR LOOP
-              WS-MONTH-L MONTHS +
-              WS-DAY-L DAYS
-              *>---
+              WS-QINTERVAL-DECIMAL YEARS 
               AND 
               YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              WS-QINTERVAL-DECIMAL YEARS - 
-              *>TODO AS ABOVE
-              WS-MONTH-U MONTHS - 
-              WS-DAY-U DAYS
-              *>---
+              WS-QINTERVAL-DECIMAL YEARS 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
            END-EXEC        
