@@ -304,7 +304,7 @@
       * ---------------------------------------------------------------        
               THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS, 
       *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION        
-              DATE(:WS-QREC01-DATE-UPPER) + 
+              (THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS) + 
               :WS-QREC01-INTERVAL-DECIMAL YEARS
               FROM SYSIBM.SYSDUMMY1 
               FOR FETCH ONLY
@@ -318,9 +318,9 @@
               SELECT 
               CAST( 
               ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
-              YEAR(BDATE)) AS SMALLINT),
+              YEAR(BDATE)) AS SMALLINT), 
               *>UP: AGE FROM YEAR(BDATE), 
-              CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT)
+              CAST(((MONTH(BDATE) * 100) + DAY(BDATE)) AS SMALLINT) 
               GENDER, 
               ALIVE 
               FROM CITIZENS 
@@ -332,7 +332,7 @@
               YEAR(ADD_YEARS(DATE(:WS-QREC01-DATE-LOWER), 
               :WS-QREC01-INTERVAL-DECIMAL)) 
               FOR FETCH ONLY 
-           END-EXEC.  
+           END-EXEC. 
       ******************************************************************
       *    MQ - ALTERNATIVE ONE ROW QUERIES FOR BETTER PERFORMANCE 
       *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
@@ -347,14 +347,14 @@
               ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
               YEAR(BDATE)) AS SMALLINT),
               SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'M' THEN 1 
-                                            else 0 end), *> TMALIVE,
+                                            ELSE 0 END), *> TMALIVE,
               SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'F' THEN 1 
-                                            else 0 end), *> TFALIVE,
+                                            ELSE 0 END), *> TFALIVE,
               SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'M' THEN 1 
-                                            else 0 end), *> TMDEAD,
+                                            ELSE 0 END), *> TMDEAD,
               SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'F' THEN 1 
-                                            else 0 end) *>TFDEAD
-              FROM CITIZEN 
+                                            ELSE 0 END) *>TFDEAD
+              FROM CITIZENS 
               WHERE 
               YEAR(BDATE) 
               BETWEEN 
@@ -370,8 +370,43 @@
       *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES
       ******************************************************************
-      *    TODO
+      *    TODO: DEFINE VAR & CREATE TABLE FOR LOOP, 27 X2
       * ---------------------------------------------------------------
+           EXEC SQL 
+              DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
+              SELECT CAST( 
+              ((SELECT YEAR(CURRENT DATE) FROM SYSIBM.SYSDUMMY1) - 
+              YEAR(BDATE)) AS SMALLINT),
+              SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'M' THEN 1 
+                                            ELSE 0 END), *> TMALIVE,
+              SUM(CASE WHEN ALIVE = 'A' AND GENDER = 'F' THEN 1 
+                                            ELSE 0 END), *> TFALIVE,
+              SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'M' THEN 1 
+                                            ELSE 0 END), *> TMDEAD,
+              SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'F' THEN 1 
+                                            ELSE 0 END) *>TFDEAD
+              FROM CITIZENS 
+              WHERE BDATE 
+              BETWEEN 
+              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+              WS-QINTERVAL-DECIMAL YEARS + 
+              *>TODO: DEFINE VAR & CREATE TABLE FOR LOOP
+              WS-MONTH-L MONTHS +
+              WS-DAY-L DAYS
+              *>---
+              AND 
+              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+              WS-QINTERVAL-DECIMAL YEARS - 
+              *>TODO AS ABOVE
+              WS-MONTH-U MONTHS - 
+              WS-DAY-U DAYS
+              *>---
+              GROUP BY YEAR(BDATE) 
+              FOR FETCH ONLY 
+           END-EXEC        
+      
+      
+      
       *     EXEC SQL 
       *        DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
       *        SELECT 
