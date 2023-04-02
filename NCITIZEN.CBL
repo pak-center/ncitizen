@@ -358,21 +358,21 @@
               WHERE 
               YEAR(BDATE) 
               BETWEEN 
-              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              WS-QINTERVAL-DECIMAL YEARS 
+              YEAR(DATE(:WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+              :WS-QINTERVAL-DECIMAL YEARS 
               AND 
-              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              WS-QINTERVAL-DECIMAL YEARS 
+              YEAR(DATE(:WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+              :WS-QINTERVAL-DECIMAL YEARS 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
            END-EXEC              
       ******************************************************************
-      *    MQ - NAKSHATRAS SQL QUERIES VARIATIONS
-      *         WITH VARIABLES
+      *    MQ 02 - NAKSHATRAS SQL QUERIES VARIATIONS
+      *         WITH VARIABLES TO RUN INSIDE LOOP
       ******************************************************************
       *    TODO: USE SUBQUERY & CREATE TABLE FOR LOOP, 27 X2
-      *    LIKE: MONTH(BDATE) = :VAR1L AND DAY(BDATE) > VAR2L
-      *    LIKE: MONTH(BDATE) = :VAR1U AND DAY(BDATE) < VAR2U
+      *    LIKE: MONTH(BDATE) = :VAR1L AND DAY(BDATE) > :VAR2L
+      *    LIKE: MONTH(BDATE) = :VAR1U AND DAY(BDATE) < :VAR2U
       * ---------------------------------------------------------------
            EXEC SQL 
               DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
@@ -388,13 +388,18 @@
               SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'F' THEN 1 
                                             ELSE 0 END) *>TFDEAD
               FROM CITIZENS 
-              WHERE BDATE 
-              BETWEEN 
-              YEAR(DATE(WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              WS-QINTERVAL-DECIMAL YEARS 
+              WHERE YEAR(BDATE) BETWEEN 
+              YEAR(DATE(:WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+              :WS-QINTERVAL-DECIMAL YEARS 
               AND 
-              YEAR(DATE(WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              WS-QINTERVAL-DECIMAL YEARS 
+              YEAR(DATE(:WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+              :WS-QINTERVAL-DECIMAL YEARS 
+              AND 
+              MONTH(BDATE) = 
+                 :WS-QN-MONTH-L AND DAY(BDATE) >= :WS-QN-DAY-L 
+              OR
+              MONTH(BDATE) = 
+                 :WS-QN-MONTH-U AND DAY(BDATE) <= :WS-QN-DAY-U
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
            END-EXEC        
