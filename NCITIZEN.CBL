@@ -151,6 +151,12 @@
          07 WS-QREC01-DATE-LOWER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER         PIC   X(10). 
          07 WS-QREC01-DATE-UPPER-I       PIC   X(10). 
+      *MQ 02 NAKSHATRA RANGE
+        05 WS-QREC01-MQ02-N-MONTH-L      PIC   S99 COMP-3.
+        05 WS-QREC01-MQ02-N-DAY-L        PIC   S99 COMP-3.
+        05 WS-QREC01-MQ02-N-MONTH-U      PIC   S99 COMP-3.
+        05 WS-QREC01-MQ02-N-DAY-U        PIC   S99 COMP-3.
+      *  ---
         05 WS-QREC01-MG-SUMMARY.
          07 WS-QREC01-MQ-AGE             PIC   S9(4)  COMP
                OCCURS 121 TIMES.
@@ -359,13 +365,13 @@
               YEAR(BDATE) 
               BETWEEN 
               YEAR(DATE(:WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              :WS-QINTERVAL-DECIMAL YEARS 
+              :WS-QREC01-INTERVAL-DECIMAL YEARS 
               AND 
               YEAR(DATE(:WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              :WS-QINTERVAL-DECIMAL YEARS 
+              :WS-QREC01-INTERVAL-DECIMAL YEARS 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
-           END-EXEC              
+           END-EXEC 
       ******************************************************************
       *    MQ 02 - NAKSHATRAS SQL QUERIES VARIATIONS
       *         WITH VARIABLES TO RUN INSIDE LOOP
@@ -388,23 +394,28 @@
               SUM(CASE WHEN ALIVE = 'D' AND GENDER = 'F' THEN 1 
                                             ELSE 0 END) *>TFDEAD
               FROM CITIZENS 
-              WHERE YEAR(BDATE) BETWEEN 
-              YEAR(DATE(:WS-QREC01-DATE-LOWER)) - *>2023/01/01 
-              :WS-QINTERVAL-DECIMAL YEARS 
+              WHERE 
+              ( 
+              YEAR(BDATE) BETWEEN 
+               YEAR(DATE(:WS-QREC01-DATE-LOWER)) - *>2023/01/01 
+               :WS-QREC01-INTERVAL-DECIMAL YEARS 
               AND 
-              YEAR(DATE(:WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
-              :WS-QINTERVAL-DECIMAL YEARS 
-              AND 
-              MONTH(BDATE) = 
-                 :WS-QN-MONTH-L AND DAY(BDATE) >= :WS-QN-DAY-L 
-              OR
-              MONTH(BDATE) = 
-                 :WS-QN-MONTH-U AND DAY(BDATE) <= :WS-QN-DAY-U
+               YEAR(DATE(:WS-QREC01-DATE-UPPER-I)) - *>2023/12/31 
+               :WS-QREC01-INTERVAL-DECIMAL YEARS 
+              ) 
+              AND
+              (  
+               MONTH(BDATE) = :WS-QREC01-MQ02-N-MONTH-L 
+                 AND 
+               DAY(BDATE) >= :WS-QREC01-MQ02-N-DAY-L 
+              OR 
+               MONTH(BDATE) = :WS-QREC01-MQ02-N-MONTH-U 
+                 AND 
+               DAY(BDATE) <= :WS-QREC01-MQ02-N-DAY-U 
+              ) 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
            END-EXEC        
-      
-      
       
       *     EXEC SQL 
       *        DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
