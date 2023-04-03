@@ -298,9 +298,9 @@
       ******************************************************************
       *    DEBUG VARIABLES - DBG
       ******************************************************************
-       01 WS-DBG.
-        05 WS-DBG-AGE-0               PIC   S9    VALUE 0.
-        05 WS-DBG-AGE-120             PIC   S9    VALUE 0.    
+      D 01 WS-DBG.
+      D  05 WS-DBG-AGE-0               PIC   S9    VALUE 0.
+      D  05 WS-DBG-AGE-120             PIC   S9    VALUE 0.    
       *
       ******************************************************************
       *    INITIALIZE VARIABLES FOR SQL EXECS
