@@ -159,14 +159,14 @@
       *  ---
         05 WS-QREC01-MG-SUMMARY.
          07 WS-QREC01-MQ-AGE             PIC   S9(4)  COMP
-               OCCURS 121 TIMES.
+              OCCURS 121 TIMES.
          07 WS-QREC01-MQ-TMALIVE         PIC   S9(8)  COMP
-               OCCURS 121 TIMES.
-        07 WS-QREC01-MQ-TFALIVE          PIC   S9(8)  COMP
               OCCURS 121 TIMES.
-        07 WS-QREC01-MQ-TMDEAD           PIC   S9(8)  COMP
+         07 WS-QREC01-MQ-TFALIVE         PIC   S9(8)  COMP
               OCCURS 121 TIMES.
-        07 WS-QREC01-MQ-TFDEAD           PIC   S9(8)  COMP
+         07 WS-QREC01-MQ-TMDEAD          PIC   S9(8)  COMP
+              OCCURS 121 TIMES.
+         07 WS-QREC01-MQ-TFDEAD          PIC   S9(8)  COMP
               OCCURS 121 TIMES.
       * 
         05 WS-QREC01-MQ-ROWSET. *> MAX SIZE OF ROWSET IS 32,757
@@ -296,6 +296,13 @@
        01  TIMING                     PIC   S9(9) BINARY.
       *
       ******************************************************************
+      *    DEBUG VARIABLES - DBG
+      ******************************************************************
+       01 WS-DBG.
+        05 WS-DBG-AGE-0               PIC   S9    VALUE 0.
+        05 WS-DBG-AGE-120             PIC   S9    VALUE 0.    
+      *
+      ******************************************************************
       *    INITIALIZE VARIABLES FOR SQL EXECS
       ******************************************************************
       * --------------------------------------------------------------- 
@@ -344,7 +351,7 @@
       *         27 NAKSHATRAS WITH VARIATIONS OF QUERIES TODO 
       ******************************************************************
       * ---------------------------------------------------------------
-      *    MQ 01 SQL SQUERY FOR TOTAL STATS SECTION 
+      *    MQ 01 SQL QUERY FOR TOTAL STATS SECTION 
       *    RUNS X1
       * ---------------------------------------------------------------
            EXEC SQL 
@@ -415,18 +422,7 @@
               ) 
               GROUP BY YEAR(BDATE) 
               FOR FETCH ONLY 
-           END-EXEC        
-      
-      *     EXEC SQL 
-      *        DECLARE MQ02 CURSOR WITH ROWSET POSITIONING FOR 
-      *        SELECT 
-              
-      *        FROM CITIZENS 
-      *        WHERE 
-
-      *        GROUP BY YEAR(BDATE)
-      *        FOR FETCH ONLY 
-      *     END-EXEC. 
+           END-EXEC 
 
       ******************************************************************
       *    END OF SQL VARIABLES & STRUCTURES
@@ -970,7 +966,24 @@
             MOVE 1 TO WS-QREC01-MQ-AGE 
            END-IF
            SET INX-AGE-SUMM TO WS-QREC01-MQ-AGE 
-           
+
+      D    *> DEBUG TO VERIFY IF THERE IS NO REPEATING FOR AGE 0 OR 120 
+      D     IF WS-DBG-AGE-0 = 1 THEN 
+      D     DISPLAY 'DEBUG: INSIDE MQ-01 (N. 201) IS REPEATING AGE: ',
+      D             '0'
+      D     END-IF
+      D     IF WS-DBG-AGE-120 = 1 THEN 
+      D     DISPLAY 'DEBUG: INSIDE MQ-01 (N. 201) IS REPEATING AGE: ',
+      D             '120'
+      D     END-IF
+      D     *>
+      D     IF WS-QREC01-MQ-AGE = 0 THEN
+      D     MOVE 1 TO WS-DBG-AGE-0
+      D     END-IF
+      D     IF WS-QREC01-MQ-AGE = 120 THEN 
+      D     MOVE 1 TO WS-DBG-AGE-120
+      D     END-IF
+
            MOVE WS-QREC01-MQ-TMALIVE TO REC01-TMALIVE(INX-AGE-SUMM) 
            MOVE WS-QREC01-MQ-TFALIVE TO REC01-TFALIVE(INX-AGE-SUMM) 
            MOVE WS-QREC01-MQ-TMDEAD TO REC01-TMDEAD(INX-AGE-SUMM) 
