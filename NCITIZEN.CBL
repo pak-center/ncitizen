@@ -305,23 +305,7 @@
       ******************************************************************
       *    INITIALIZE VARIABLES FOR SQL EXECS
       ******************************************************************
-      * --------------------------------------------------------------- 
-      *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
-      * ---------------------------------------------------------------
-           EXEC SQL  
-              DECLARE CD01 CURSOR FOR 
-              SELECT 
-              THIS_YEAR(CURRENT DATE),
-      * --------------------------------------------------------------- 
-      *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
-      * ---------------------------------------------------------------        
-              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS, 
-      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION        
-              (THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS) + 
-              :WS-QREC01-INTERVAL-DECIMAL YEARS
-              FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
-           END-EXEC.
+
       ******************************************************************
       *    SQ - MAIN QUERY TO SELECT MULTIPLE ROWS TO PROCESSING
       *         WORST PERFORMANCE AND HEAVY LOAD   
@@ -520,26 +504,32 @@
             COMPUTE WS-QREC01-INTERVAL-DECIMAL = -1 * 
                     WS-QREC01-INTERVAL-DECIMAL 
            END-IF 
-
-           EXEC SQL
-              OPEN CD01 
-           END-EXEC. 
-           PERFORM PARA-SQL-ERROR-CHECK 
       *     
-           EXEC SQL
-           FETCH CD01 INTO 
+      * --------------------------------------------------------------- 
+      *    SETS FIRST DAY AND MONTH OF THE YEAR E.G. 2023/01/01   
+      * ---------------------------------------------------------------
+           EXEC SQL 
+              SELECT 
+              THIS_YEAR(CURRENT DATE),
+      * --------------------------------------------------------------- 
+      *    SETS LAST DAY AND MONTH OF THE YEAR E.G. 2023/12/31   
+      * ---------------------------------------------------------------        
+              THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS, 
+      *ADDED DECIMAL INTERVAL FOR LOOP FIRST ITERATION        
+              (THIS_YEAR(CURRENT DATE) + 1 YEARS - 1 DAYS) + 
+              :WS-QREC01-INTERVAL-DECIMAL YEARS
+              INTO 
               :WS-QREC01-DATE-LOWER, 
               :WS-QREC01-DATE-UPPER, 
-              :WS-QREC01-DATE-UPPER-I 
-           END-EXEC 
+              :WS-QREC01-DATE-UPPER-I    
+              FROM SYSIBM.SYSDUMMY1 
+              FOR FETCH ONLY
+           END-EXEC.
+
            PERFORM PARA-SQL-ERROR-CHECK 
            MOVE REC01-INTERVAL-VAL TO WS-QREC01-INTERVAL-DECIMAL 
       *TODO: MORE MOVE -ADD IN LATER TIME
       *VERIFY
-           EXEC SQL
-              CLOSE CD01 
-           END-EXEC.
-           PERFORM PARA-SQL-ERROR-CHECK 
       * --------------------------------------------------------------- 
       ******************************************************************
            EXIT.
