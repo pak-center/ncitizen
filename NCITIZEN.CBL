@@ -523,7 +523,6 @@
               :WS-QREC01-DATE-UPPER, 
               :WS-QREC01-DATE-UPPER-I    
               FROM SYSIBM.SYSDUMMY1 
-              FOR FETCH ONLY
            END-EXEC.
 
            PERFORM PARA-SQL-ERROR-CHECK 
